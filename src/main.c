@@ -102,26 +102,16 @@ void savestateMain(void) {
 #define DPAD_RIGHT 0x0100
 #define L_BUTTON 0x0020
 
+void printText(char*);
+void setTextPosition(s32, s32, s32);
+void setTextScale(f32 xScale, f32 yScale);
+void setTextOpacity(u8);
+
 void perFrameCFunction(void) {
-    // if (p1ButtonsPressed == DPAD_LEFT) {
-    //     if (stateCooldown == 0) {
-    //         osCreateThread(&gCustomThread.thread, 255, savestateMain, NULL,
-    //                 gCustomThread.stack + sizeof(gCustomThread.stack), 255);
-    //         osStartThread(&gCustomThread.thread);
-    //         stateCooldown = 5;
-    //     }
-	// }
-
-	// if (p1ButtonsPressed == DPAD_RIGHT) {
-    //     if (stateCooldown == 0) {
-    //         osCreateThread(&gCustomThread.thread, 255, loadstateMain, NULL,
-    //                 gCustomThread.stack + sizeof(gCustomThread.stack), 255);
-    //         osStartThread(&gCustomThread.thread);
-    //         stateCooldown = 5;
-    //     }
-	// }
-
-    // if (stateCooldown > 0) {
-    //     stateCooldown--;
-    // }
+    char message[] = "TEST";
+    setTextOpacity(0xFF);
+    //x pos, y pos, ?
+    setTextPosition(0x20, 0xB0, 2);
+    setTextScale(1.0f, 1.0f);
+    printText(message);
 }

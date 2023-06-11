@@ -250,6 +250,6 @@ J infiniteLoop
 NOP
 
 .importobj "obj/crash.o"
-.importobj "obj/dmaCopy.o"
+.importobj "obj/main.o"
 
 END:
