@@ -58,7 +58,11 @@ JR RA
 ADDIU sp, sp, 0x80
 
 .org 0x8002691C
+J moreReplacedCode
+
+.org 0x80029610
 J perFrameASM
+NOP
 
 //7C1400
 .headersize 0x7FC3EC00
@@ -109,11 +113,7 @@ ADDIU s4, s4, 0xAD74
 ADDIU s5, s5, 0xAD30
 ADDIU s6, s6, 0xF1E0
 SW t8, 0xAD3C (at)
-
-
-perFrameASM:
-JAL perFrameCFunction
-NOP
+moreReplacedCode:
 OR a0, s2, r0
 OR a1, r0, r0
 JAL osRecvMesg
@@ -123,6 +123,14 @@ NOP
 SW v0, 0x0000 (s0)
 J 0x80026770
 SW v1, 0x0004 (s0)
+
+perFrameASM:
+JAL perFrameCFunction
+NOP
+LUI t6, 0x800F
+J 0x80029618
+LHU t6, 0xAF60 (t6)
+
 //80026770
 
 

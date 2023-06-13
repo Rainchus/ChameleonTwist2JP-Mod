@@ -178,7 +178,7 @@ void setTextOpacity(u8);
 //8003CBAC
 
 void cBootFunction(void) { //ran once on boot
-    //crash_screen_init();
+    crash_screen_init();
     stateCooldown = 0; //does this work??
     savestateCurrentSlot = 0;
     savestate1Size = 0;
