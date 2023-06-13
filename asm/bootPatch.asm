@@ -1,21 +1,3 @@
-// .headersize 0x7FFFF400
-// .org 0x8005B6EC
-// JAL DisplacedBootCode
-// NOP
-
-//0xC0500 ROM
-//0x800BF900 RAM
-
-// .headersize 0x7FFFF400
-// .org 0x8005B6E4
-// LI a0, 0xB9820 //ROM addr to read from
-// LI a1, 0x807E3000 //RAM addr to write to
-// LI a2, 0x8000 //size to DMA
-// JAL dmaCopy2
-// NOP
-// J DisplacedBootCode
-// NOP
-
 //mainThread 8001C81C
 
 .headersize 0x80024C00
@@ -23,9 +5,9 @@
 bootHook:
 
 LI a0, 0x7C1400
-LI a1, 0x80406100
+LI a1, 0x80400000
 JAL dma_copy
-ADDIU a2, r0, 0x7000
+ORI a2, r0, 0xFFF0
 J copiedHookCode
 NOP
 
@@ -76,11 +58,11 @@ JR RA
 ADDIU sp, sp, 0x80
 
 .org 0x8002691C
-J bigLabel
+J perFrameASM
 
-
-.headersize 0x7FC44D00
-.org 0x80406100
+//7C1400
+.headersize 0x7FC3EC00
+.org 0x80400000
 copiedHookCode:
 JAL cBootFunction
 NOP
@@ -127,7 +109,9 @@ ADDIU s4, s4, 0xAD74
 ADDIU s5, s5, 0xAD30
 ADDIU s6, s6, 0xF1E0
 SW t8, 0xAD3C (at)
-bigLabel:
+
+
+perFrameASM:
 JAL perFrameCFunction
 NOP
 OR a0, s2, r0
@@ -249,7 +233,23 @@ NOP
 J infiniteLoop
 NOP
 
+getStatusRegister:
+MFC0 v0, $12
+NOP
+NOP
+JR RA
+NOP
+
+setStatusRegister:
+MTC0 a0, $12
+NOP
+NOP
+JR RA
+NOP
+
 .importobj "obj/crash.o"
 .importobj "obj/main.o"
+.importobj "obj/lib.o"
+.importobj "obj/lz4.o"
 
 END:

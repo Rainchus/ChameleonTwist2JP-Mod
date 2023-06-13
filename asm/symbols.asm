@@ -30,12 +30,13 @@
 // .definelabel osContGetReadData, 0x80090120
 
 //.definelabel cFile, 0x800C2000
-.definelabel gCustomThread, 0x80400000
-.definelabel gCrashScreen, 0x80405000
+.definelabel gCustomThread, 0x807F0000
+.definelabel gCrashScreen, 0x807F5000
 .definelabel printText, 0x80050DA0
 .definelabel setTextPosition, 0x80050F38
 .definelabel setTextScale, 0x80051020
 .definelabel setTextOpacity, 0x80049DE8
+.definelabel currentlyPressedButtons, 0x800FF1C6
 
 
 .definelabel osMemSize, 0x80000318
