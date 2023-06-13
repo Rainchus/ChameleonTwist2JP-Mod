@@ -36,8 +36,11 @@
 .definelabel setTextPosition, 0x80050F38
 .definelabel setTextScale, 0x80051020
 .definelabel setTextOpacity, 0x80049DE8
+.definelabel currentlyHeldButtons, 0x800FF1C0
 .definelabel currentlyPressedButtons, 0x800FF1C6
-
+.definelabel D_80160648, 0x80160648
+.definelabel D_80187BBC, 0x80187BBC
+.definelabel D_80187b20, 0x80187b20
 
 .definelabel osMemSize, 0x80000318
 .definelabel __osCurrentTime, 0x801CCA84

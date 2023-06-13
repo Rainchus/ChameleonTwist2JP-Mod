@@ -10,7 +10,7 @@ s32 saveOrLoadStateModeToggleCooldown = 0;
 s32 saveOrLoadStateMode = 0;
 
 extern u16 currentlyPressedButtons;
-
+extern u16 currentlyHeldButtons;
 #define SAVE_MODE 0
 #define LOAD_MODE 1
 
@@ -44,8 +44,8 @@ void pauseUntilDMANotBusy(void) {
 }
 
 #define ramAddrSavestateDataSlot1 (void*)0x804C0000
-#define ramAddrSavestateDataSlot2 (void*)0x805D0000
-#define ramAddrSavestateDataSlot3 (void*)0x806E0000 //hopefully doesn't overflow into 0x807FFFDC (though if it does we were screwed anyway)
+//#define ramAddrSavestateDataSlot2 (void*)0x805D0000
+//#define ramAddrSavestateDataSlot3 (void*)0x806E0000 //hopefully doesn't overflow into 0x807FFFDC (though if it does we were screwed anyway)
 #define DPAD_LEFT_CASE 0
 #define DPAD_UP_CASE 1
 #define DPAD_RIGHT_CASE 2
@@ -72,18 +72,19 @@ void loadstateMain(void) {
     switch (savestateCurrentSlot) {
         case DPAD_LEFT_CASE:
             if (savestate1Size != 0 && savestate1Size != -1) {
-                decompress_lz4_ct_default(ramEndAddr - ramStartAddr, savestate1Size, ramAddrSavestateDataSlot1); //always decompresses to `ramStartAddr`
+                //decompress_lz4_ct_default(ramEndAddr - ramStartAddr, savestate1Size, ramAddrSavestateDataSlot1); //always decompresses to `ramStartAddr`
+                customMemCpy(ramStartAddr, ramAddrSavestateDataSlot1, savestate1Size);
             }  
         break;
-        case DPAD_UP_CASE:
-            if (savestate2Size != 0 && savestate2Size != -1) {
-                decompress_lz4_ct_default(ramEndAddr - ramStartAddr, savestate2Size, ramAddrSavestateDataSlot2); //always decompresses to `ramStartAddr`
-            }
-        break;
-        case DPAD_RIGHT_CASE:
-            if (savestate3Size != 0 && savestate3Size != -1) {
-                decompress_lz4_ct_default(ramEndAddr - ramStartAddr, savestate3Size, ramAddrSavestateDataSlot3); //always decompresses to `ramStartAddr`
-            }  
+        // case DPAD_UP_CASE:
+        //     if (savestate2Size != 0 && savestate2Size != -1) {
+        //         decompress_lz4_ct_default(ramEndAddr - ramStartAddr, savestate2Size, ramAddrSavestateDataSlot2); //always decompresses to `ramStartAddr`
+        //     }
+        // break;
+        // case DPAD_RIGHT_CASE:
+        //     if (savestate3Size != 0 && savestate3Size != -1) {
+        //         decompress_lz4_ct_default(ramEndAddr - ramStartAddr, savestate3Size, ramAddrSavestateDataSlot3); //always decompresses to `ramStartAddr`
+        //     }  
         break;
     }
     setStatusRegister(status);
@@ -113,14 +114,16 @@ void savestateMain(void) {
     __osDisableInt();
     switch (savestateCurrentSlot) {
         case DPAD_LEFT_CASE:
-            savestate1Size = compress_lz4_ct_default(ramStartAddr, ramEndAddr - ramStartAddr, ramAddrSavestateDataSlot1);
+            //savestate1Size = compress_lz4_ct_default(ramStartAddr, ramEndAddr - ramStartAddr, ramAddrSavestateDataSlot1);
+            customMemCpy(ramAddrSavestateDataSlot1, ramStartAddr, ramEndAddr - ramStartAddr);
+            savestate1Size = ramEndAddr - ramStartAddr;
         break;
-        case DPAD_UP_CASE:
-            savestate2Size = compress_lz4_ct_default(ramStartAddr, ramEndAddr - ramStartAddr, ramAddrSavestateDataSlot2);
-        break;
-        case DPAD_RIGHT_CASE:
-            savestate3Size = compress_lz4_ct_default(ramStartAddr, ramEndAddr - ramStartAddr, ramAddrSavestateDataSlot3);
-        break;
+        // case DPAD_UP_CASE:
+        //     savestate2Size = compress_lz4_ct_default(ramStartAddr, ramEndAddr - ramStartAddr, ramAddrSavestateDataSlot2);
+        // break;
+        // case DPAD_RIGHT_CASE:
+        //     savestate3Size = compress_lz4_ct_default(ramStartAddr, ramEndAddr - ramStartAddr, ramAddrSavestateDataSlot3);
+        // break;
     }
     setStatusRegister(status);
     __osRestoreInt();
@@ -128,39 +131,54 @@ void savestateMain(void) {
 }
 
 void checkInputsForSavestates(void) {
-    savestateCurrentSlot = -1;//set to invalid
+    savestateCurrentSlot = 0;//set to 0
 
     if (currentlyPressedButtons & DPAD_LEFT) {
-        savestateCurrentSlot = 0;
+        isSaveOrLoadActive = 1;
+        osCreateThread(&gCustomThread.thread, 255, (void*)savestateMain, NULL,
+                gCustomThread.stack + sizeof(gCustomThread.stack), 255);
+        osStartThread(&gCustomThread.thread);
+        stateCooldown = 5;
+    } else if (currentlyPressedButtons & DPAD_RIGHT) {
+        isSaveOrLoadActive = 1;
+        osCreateThread(&gCustomThread.thread, 255, (void*)loadstateMain, NULL,
+                gCustomThread.stack + sizeof(gCustomThread.stack), 255);
+        osStartThread(&gCustomThread.thread);
+        currentlyPressedButtons = 0;
+        stateCooldown = 5; 
     }
 
-    if (currentlyPressedButtons & DPAD_UP) {
-        savestateCurrentSlot = 1;
-    }
+    // if (currentlyPressedButtons & DPAD_LEFT) {
+    //     savestateCurrentSlot = 0;
+    // }
 
-    if (currentlyPressedButtons & DPAD_RIGHT) {
-        savestateCurrentSlot = 2;
-    }
+    // if (currentlyPressedButtons & DPAD_UP) {
+    //     savestateCurrentSlot = 1;
+    // }
+
+    // if (currentlyPressedButtons & DPAD_RIGHT) {
+    //     savestateCurrentSlot = 2;
+    // }
 
     if (savestateCurrentSlot == -1 || stateCooldown != 0){
         return;
     }
 
  
-    if (saveOrLoadStateMode == SAVE_MODE) {
-        isSaveOrLoadActive = 1;
-        osCreateThread(&gCustomThread.thread, 255, (void*)savestateMain, NULL,
-                gCustomThread.stack + sizeof(gCustomThread.stack), 255);
-        osStartThread(&gCustomThread.thread);
-        stateCooldown = 5;
-    } else {
-        isSaveOrLoadActive = 1;
-        osCreateThread(&gCustomThread.thread, 255, (void*)loadstateMain, NULL,
-                gCustomThread.stack + sizeof(gCustomThread.stack), 255);
-        osStartThread(&gCustomThread.thread);
-        currentlyPressedButtons = 0;
-        stateCooldown = 5;            
-    }
+    // if (saveOrLoadStateMode == SAVE_MODE) {
+    //     isSaveOrLoadActive = 1;
+    //     osCreateThread(&gCustomThread.thread, 255, (void*)savestateMain, NULL,
+    //             gCustomThread.stack + sizeof(gCustomThread.stack), 255);
+    //     osStartThread(&gCustomThread.thread);
+    //     stateCooldown = 5;
+    // } else {
+    //     isSaveOrLoadActive = 1;
+    //     osCreateThread(&gCustomThread.thread, 255, (void*)loadstateMain, NULL,
+    //             gCustomThread.stack + sizeof(gCustomThread.stack), 255);
+    //     osStartThread(&gCustomThread.thread);
+    //     currentlyPressedButtons = 0;
+    //     stateCooldown = 5;            
+    // }
 
 }
 
@@ -189,7 +207,18 @@ void cBootFunction(void) { //ran once on boot
     saveOrLoadStateMode = 0;
 }
 
+//80160648 003F
+
+extern u8 D_80160648;
+extern f32 D_80187B20; //is 0x20 into gPlayerActors[0]
+extern s16 D_80187BBC;
 void perFrameCFunction(void) {
+    D_80160648 = 0x3F; //unlock all levels
+    D_80187BBC = 10;
+    if (currentlyHeldButtons & L_BUTTON) {
+        D_80187B20 = 32.0f;
+    }
+    
     if (stateCooldown == 0) {
         if (saveOrLoadStateModeToggleCooldown == 0) {
             if (currentlyPressedButtons & DPAD_DOWN) {
