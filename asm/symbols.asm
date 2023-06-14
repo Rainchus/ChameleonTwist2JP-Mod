@@ -29,10 +29,25 @@
 // .definelabel func_800621D8, 0x800621D8
 // .definelabel osContGetReadData, 0x80090120
 
+
+.definelabel func_80039D3C, 0x80039D3C
+.definelabel func_800510A8, 0x800510A8
+.definelabel func_80050F54, 0x80050F54
+.definelabel func_80050F9C, 0x80050F9C
+.definelabel func_80051034, 0x80051034
+
+.definelabel D_800ECFD0, 0x800ECFD0
+.definelabel D_800F6410, 0x800F6410
+.definelabel D_800F6498, 0x800F6498
+
+.definelabel printText, 0x800BF230
+.definelabel unkPrintFunction, 0x80051468
 //.definelabel cFile, 0x800C2000
 .definelabel gCustomThread, 0x807F0000
 .definelabel gCrashScreen, 0x807F5000
-.definelabel printText, 0x80050DA0
+.definelabel printDigit, 0x80050DA0
+.definelabel printIcon, 0x800E0804
+.definelabel setTextGradient, 0x80051040
 .definelabel setTextPosition, 0x80050F38
 .definelabel setTextScale, 0x80051020
 .definelabel setTextOpacity, 0x80049DE8
