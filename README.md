@@ -1,5 +1,5 @@
 # Practwist CT2
-A speedrun practice mod for the JP chameleon twist rom that adds save states and a crash screen
+A speedrun practice mod JP Chameleon Twist 2 that adds save states and a crash screen
 
 # How to patch
 Take a vanilla chameleon twist 2 jp rom in `.z64 format` and patch it using the `.bps` file at this site https://hack64.net/tools/patcher.php</br></br>
