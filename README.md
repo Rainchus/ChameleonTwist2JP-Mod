@@ -7,7 +7,7 @@ If you rom isn't `.z64` format, this site can swap it to that format https://hac
 
 # Controls
 Currently, only one savestate slot exist (and is uncompressed so it's very fast)</br>
-`Dpad-Up` toggles printing of powerup display
+`Dpad-Up` toggles printing of powerup display and speed
 `Dpad-Down` cycles through power up states.</br>
 `0 - Normal`
 `1 - Always Speed Up`
