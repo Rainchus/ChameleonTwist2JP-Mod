@@ -201,6 +201,7 @@ typedef struct unkTextPointer {
 } unkTextPointer;
 
 unkTextPointer testingVar = {0};
+unkTextPointer testingVar2 = {0};
 
 void func_800505E0(unkTextPointer*);
 s32 func_8005070C(unkTextPointer*); //moves text off screen if need be
@@ -224,13 +225,21 @@ void func_80050770_Hook(unkTextPointer* arg0) {
         return;
     }
 
-    //else print custom
+    //else print speed
     testingVar.unk48 = 4;   
     testingVar.unkFC = 0;
-    testingVar.unk6C = 15.0f; //xpos
+    testingVar.unk6C = -15.0f; //xpos
     testingVar.unk70 = 205.0f; //ypos
 
-    func_80050428(&testingVar, curPowerupLock);
+    func_80050428(&testingVar, gPlayerActor->speed);
+
+    //prints powerup
+    testingVar2.unk48 = 4;   
+    testingVar2.unkFC = 0;
+    testingVar2.unk6C = 30.0f; //xpos
+    testingVar2.unk70 = 205.0f; //ypos
+
+    func_80050428(&testingVar2, curPowerupLock);
 }
 
 void cBootFunction(void) { //ran once on boot

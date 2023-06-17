@@ -52,6 +52,17 @@ typedef struct CustomThread {
     /* 0x9D2 */ u16 height;
 } CustomThread; // size = 0x9D4
 
+typedef struct PlayerActor {
+/* 0x000 */ char unk_00[0x870];
+/* 0x870 */ Vec3f pos;
+/* 0x87C */ f32 unk_87C;
+/* 0x880 */ f32 unk_880;
+/* 0x884 */ f32 unk_884;
+/* 0x888 */ f32 speed;
+} PlayerActor;
+
+extern PlayerActor* gPlayerActor; //80187290
+
 extern int getStatusRegister(void); //returns status reg
 extern int setStatusRegister(s32); //returns status reg
 

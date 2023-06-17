@@ -64,6 +64,7 @@
 .definelabel func_80050428, 0x80050428
 .definelabel func_800507c8, 0x800507c8
 .definelabel powerUpFloatArray, 0x800ECF64
+.definelabel gPlayerActor, 0x80187290
 
 .definelabel osMemSize, 0x80000318
 .definelabel __osCurrentTime, 0x801CCA84
