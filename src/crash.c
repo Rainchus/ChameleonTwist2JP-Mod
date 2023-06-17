@@ -20,7 +20,7 @@ void osSetTime(u64 time) {
 }
 
 u64 osGetTime();
-void *memcpy(void *,const void *,unsigned int);
+void* memcpy(void* destination, const void* source, u32 size);
 void osViRepeatLine(u8);
 
 extern OSThread *__osActiveQueue;

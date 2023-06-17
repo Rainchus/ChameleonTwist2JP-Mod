@@ -57,6 +57,14 @@
 .definelabel D_80187BBC, 0x80187BBC
 .definelabel D_80187b20, 0x80187b20
 
+.definelabel func_800505E0, 0x800505E0
+.definelabel func_80050694, 0x80050694
+.definelabel func_8005070C, 0x8005070C
+.definelabel D_80160808, 0x80160808
+.definelabel func_80050428, 0x80050428
+.definelabel func_800507c8, 0x800507c8
+.definelabel powerUpFloatArray, 0x800ECF64
+
 .definelabel osMemSize, 0x80000318
 .definelabel __osCurrentTime, 0x801CCA84
 .definelabel memcpy, 0x800E16D0

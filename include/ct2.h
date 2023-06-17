@@ -5,6 +5,8 @@ extern u64 __osCurrentTime;
 extern u32 osMemSize;
 extern s16 p1ButtonsPressed;
 
+#define ARRAY_COUNT(arr) (sizeof(arr) / sizeof(arr[0]))
+
 typedef volatile unsigned long		vu32;	/* unsigned 32-bit */
 #define	PHYS_TO_K1(x)	((u32)(x)|0xA0000000)	/* physical to kseg1 */
 #define	IO_READ(addr)		(*(vu32 *)PHYS_TO_K1(addr))
@@ -20,6 +22,7 @@ void osInvalDCache(void*, s32);
 int __osDpDeviceBusy();
 int __osSpDeviceBusy();
 int __osSiDeviceBusy();
+void* memcpy(void* destination, const void* source, u32 size);
 
 #define decompressBuffer 0x800E87E0
 

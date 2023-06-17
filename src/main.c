@@ -5,8 +5,15 @@ s32 savestateCurrentSlot = 0;
 s32 savestate1Size = 0;
 s32 savestate2Size = 0;
 s32 savestate3Size = 0;
+s32 printPowerUp = 1;
 volatile s32 isSaveOrLoadActive = 0;
 s32 saveOrLoadStateMode = 0;
+
+#define RANDOM 0
+#define SPEED 1
+#define X3 2
+
+extern f32 powerUpFloatArray[8];
 
 extern u16 currentlyPressedButtons;
 extern u16 currentlyHeldButtons;
@@ -53,8 +60,6 @@ void pauseUntilDMANotBusy(void) {
 }
 
 #define ramAddrSavestateDataSlot1 (void*)0x804C0000
-//#define ramAddrSavestateDataSlot2 (void*)0x805D0000
-//#define ramAddrSavestateDataSlot3 (void*)0x806E0000 //hopefully doesn't overflow into 0x807FFFDC (though if it does we were screwed anyway)
 #define DPAD_LEFT_CASE 0
 #define DPAD_UP_CASE 1
 #define DPAD_RIGHT_CASE 2
@@ -141,17 +146,13 @@ void checkInputsForSavestates(void) {
     }
 }
 
-// void printDigit(char*);
-// void setTextPosition(s32, s32, s32);
-// void setTextScale(f32 xScale, f32 yScale);
-// void setTextOpacity(u8);
-
 extern u8 D_80160648;
 extern f32 D_80187B20; //is 0x20 into gPlayerActors[0]
 extern s16 D_80187BBC;
 
 typedef struct unkStructCt2 {
-    char unk_00[2];
+    u8 unk_00; //sp2C
+    u8 unk_01; //sp2D
     u8 unk_02; //sp2E
     u8 unk_03; //sp2F
     u8 unk_04; //sp30
@@ -180,65 +181,57 @@ extern u8 D_800ECFD0[]; //array of characters for integers
 extern s32 D_800F6410; //?
 extern f32 D_800F6498;
 
-// s32 CustomprintDigitTest(unkStructCt2_arg0* arg0, s16 arg1) {
-//     unkStructCt2 sp2C;
-//     u8* temp_a1;
-//     u8* temp_v1;
+typedef struct unkTextPointer2 {
+    char unk_00[0x0A];
+    s16 unk_0A;
+} unkTextPointer2;
 
-//     arg0->unk_48 = 4;
-//     func_80039D3C();
-//     func_800510A8(0x20, 0x10, 0x190, 0xE0);
-//     func_80050F54(4);
-//     setTextScale(D_800F6498, D_800F6498);
-//     func_80050F9C(1);
-//     func_80051034(1);
-//     setTextGradient(0, 255, 0x80, 0, 255);
-//     setTextGradient(3, 255, 0x80, 0, 255);
-//     setTextGradient(1, 255, 255, 0, 255);
-//     setTextGradient(2, 255, 255, 0, 255);
-//     setTextPosition((s32) (arg0->pos.x + 20.0f), (s32) arg0->pos.y, (s32) arg0->pos.z);
-//     printIcon(&sp2C, &D_800F6410);
-//     temp_v1 = &D_800ECFD0[arg1 / 10];
-//     sp2C.unk_06 = 0;
-//     sp2C.unk_02 = temp_v1[0];
-//     sp2C.unk_03 = temp_v1[1];
-//     temp_a1 = &D_800ECFD0[arg1 % 10];
-//     sp2C.unk_04 = temp_a1[0];
-//     sp2C.unk_05 = temp_a1[1];
-//     printDigit(&sp2C, temp_a1);
-//     return 0;
-// }
+typedef struct unkTextPointer {
+    /* 0x00 */ char unk_00[8];
+    /* 0x08 */ unkTextPointer2* unk_08;
+    /* 0x0C */ char unk_0C[0x3C];
+    /* 0x48 */ s32 unk48;
+    /* 0x4C */ char unk_4C[4];
+    /* 0x50 */ s32 unk50;
+    /* 0x54 */ char unk_54[0x18];
+    /* 0x6C */ f32 unk6C;
+    /* 0x70 */ f32 unk70;
+    /* 0x74 */ char unk_74[0x88];
+    /* 0xFC */ s32 unkFC;
+} unkTextPointer;
 
-// s32 func_80050428_Hook(unkStructCt2_arg0* arg0, s16 arg1) {
-//     unkStructCt2 sp2C;
-//     u8* temp_a1;
-//     u8* temp_v1;
-//     char textTest[40];
+unkTextPointer testingVar = {0};
 
-//     arg0->unk_48 = 4;
-//     func_80039D3C();
-//     func_800510A8(0x20, 0x10, 0x190, 0xE0);
-//     func_80050F54(4);
-//     setTextScale(D_800F6498, D_800F6498);
-//     func_80050F9C(1);
-//     func_80051034(1);
-//     setTextGradient(0, 255, 0x80, 0, 255);
-//     setTextGradient(3, 255, 0x80, 0, 255);
-//     setTextGradient(1, 255, 255, 0, 255);
-//     setTextGradient(2, 255, 255, 0, 255);
-//     setTextPosition((s32) (arg0->pos.x + 20.0f), (s32) arg0->pos.y, (s32) arg0->pos.z);
-//     printIcon(&sp2C, &D_800F6410);
-//     temp_v1 = &D_800ECFD0[arg1 / 10];
-//     sp2C.unk_06 = 0;
-//     sp2C.unk_02 = temp_v1[0];
-//     sp2C.unk_03 = temp_v1[1];
-//     temp_a1 = &D_800ECFD0[arg1 % 10];
-//     sp2C.unk_04 = temp_a1[0];
-//     sp2C.unk_05 = temp_a1[1];
-//     printDigit(&sp2C, temp_a1);
+void func_800505E0(unkTextPointer*);
+s32 func_8005070C(unkTextPointer*); //moves text off screen if need be
+void func_80050428(unkTextPointer*, s32 value);
+s32 func_80050694(unkTextPointer*);
+void func_800507C8(unkTextPointer*);
+extern s32 D_80160808;
 
-//     return 0;
-// }
+s32 curPowerupLock = 0;
+
+void func_80050770_Hook(unkTextPointer* arg0) {
+    if (D_80160808 != 0) {
+        func_80050694(arg0);
+        func_800505E0(arg0); //prints text
+    }
+    else if (func_8005070C(arg0) == 0) {
+        func_800505E0(arg0);
+    }
+
+    if (printPowerUp == 0) {
+        return;
+    }
+
+    //else print custom
+    testingVar.unk48 = 4;   
+    testingVar.unkFC = 0;
+    testingVar.unk6C = 15.0f; //xpos
+    testingVar.unk70 = 205.0f; //ypos
+
+    func_80050428(&testingVar, curPowerupLock);
+}
 
 void cBootFunction(void) { //ran once on boot
     crash_screen_init();
@@ -246,16 +239,23 @@ void cBootFunction(void) { //ran once on boot
     savestateCurrentSlot = 0;
     savestate1Size = 0;
     isSaveOrLoadActive = 0;
-    //hookCode((void*)0x80050428, &func_80050428_Hook);
+    hookCode((void*)0x80050770, &func_80050770_Hook);
 }
 
-void unkPrintFunction(void*);
+f32 randomPowerUps[] = {
+    0.125f, 0.25f, 0.375f, 0.5f,
+    0.625f, 0.75f, 0.875f, 1.0f
+};
 
-void printCustomText(void) { //a3 is message pointer
-    //unkPrintFunction((void*)0x800F0AE0);
-    // printText(0x41, 0x42, 0x0C, (void*)0x800F99FC, 0xFF, 0x60, 0, 0xFF, 1.0f, 1.0f);
-    printText(0x32, 0x5F, 0x0C, (void*)0x80101174, 0xFF, 0xFF, 0, 0xFF, 1.0f, 1.0f);
-}
+f32 alwaysSpeedPowerUps[] = {
+    0, 1.0f, 0, 0,
+    0, 0, 0, 0
+};
+
+f32 always3XPowerUps[] = {
+    0, 0, 0, 0,
+    1.0f, 0, 0, 0
+};
 
 void perFrameCFunction(void) {
     D_80160648 = 0x3F; //unlock all levels
@@ -264,21 +264,36 @@ void perFrameCFunction(void) {
         D_80187B20 = 32.0f;
     }
 
-    printCustomText();
-
     if (stateCooldown == 0) {
-        if (currentlyPressedButtons & DPAD_DOWN) {
-            //does nothing atm
+        if (currentlyPressedButtons & DPAD_UP) {
+            printPowerUp ^= 1;
         } else {
             checkInputsForSavestates();
         }
     }
 
+    if (currentlyPressedButtons & DPAD_DOWN) {
+        curPowerupLock++;
+        if (curPowerupLock >= 3) { //if advanced to 3, reset to 0
+            curPowerupLock = 0;
+        }
+    }
+
+    switch (curPowerupLock) {
+        case RANDOM:
+            memcpy(powerUpFloatArray, randomPowerUps, sizeof(powerUpFloatArray));
+            break;
+        case SPEED:
+            memcpy(powerUpFloatArray, alwaysSpeedPowerUps, sizeof(powerUpFloatArray));
+            break;
+        case X3:
+            memcpy(powerUpFloatArray, always3XPowerUps, sizeof(powerUpFloatArray));
+            break;
+    }
+
     if (stateCooldown > 0) {
         stateCooldown--;
     }
-
-
 
     while (isSaveOrLoadActive != 0) {}
 }
