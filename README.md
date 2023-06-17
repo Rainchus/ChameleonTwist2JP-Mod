@@ -7,6 +7,11 @@ If you rom isn't `.z64` format, this site can swap it to that format https://hac
 
 # Controls
 Currently, only one savestate slot exist (and is uncompressed so it's very fast)</br>
+`Dpad-Up` toggles printing of powerup display and speed</br>
+`Dpad-Down` cycles through power up states</br>
+`0 - Normal`
+`1 - Always Speed Up`
+`2 - Always 3x`</br>
 `Dpad-left` savestates to slot 1</br>
 `Dpad-right` loads savestate from slot 1</br>
 `Holding L` make the player levitate</br>
