@@ -44,9 +44,11 @@
 .definelabel unkPrintFunction, 0x80051468
 //.definelabel cFile, 0x800C2000
 .definelabel gCustomThread, 0x807F0000
-.definelabel gCrashScreen, 0x807F5000
+.definelabel gCrashScreen, 0x807F6000
+.definelabel calls, 0x807FFFF8
+.definelabel callsAtPowerupDecision, 0x807FFFFC
 .definelabel printDigit, 0x80050DA0
-.definelabel printIcon, 0x800E0804
+//.definelabel printIcon, 0x800E0804
 .definelabel setTextGradient, 0x80051040
 .definelabel setTextPosition, 0x80050F38
 .definelabel setTextScale, 0x80051020
@@ -90,7 +92,14 @@
 .definelabel osSendMesg, 0x800D75B0
 .definelabel __osSpDeviceBusy, 0x800E24D0
 .definelabel __ossidevicebusy, 0x800E2500
-
+.definelabel rngSeed, 0x800F3FF0
 .definelabel func_800E80B0, 0x800E80B0
 .definelabel func_80026080, 0x80026080
 .definelabel p1ButtonsPressed, 0x800FF1C6
+.definelabel printDebugText, 0x80050DA0
+.definelabel setDebugTextPosition, 0x80050F38
+.definelabel formatText, 0x800E0804
+.definelabel drawDebugScreenText, 0x801FFB3C //dynamically loaded, dont call
+.definelabel sprintf, 0x800E0804
+.definelabel textStyle, 0x80185796
+.definelabel _bzero, 0x800DA130

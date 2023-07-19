@@ -80,7 +80,16 @@ extern int LZ4_compress_default(const char* src, char* dst, int srcSize, int dst
 
 extern CustomThread gCustomThread;
 
+u32 __osDisableInt(void);
+void __osRestoreInt(u32 mask);
+extern u32 calls;
+extern u32 callsAtPowerupDecision;
 
+void setDebugTextPosition(s32 xPos, s32 yPos, s32 unk);
+void formatText(void* buffer, void* string);
+void printDebugText(void* string);
+void drawDebugScreenText(void);
+void _bzero(void* buffer, s32 size);
 #define PI_BASE_REG		0x04600000
 
 /* PI DRAM address (R/W): [23:0] starting RDRAM address */

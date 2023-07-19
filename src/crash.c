@@ -344,7 +344,7 @@ void crash_screen_init(void) {
     gCrashScreen.height = 16;
     gCrashScreen.frameBuf = (u16*)((osMemSize | 0xA0000000) - ((SCREEN_WIDTH * SCREEN_HEIGHT) * 2));
     osCreateMesgQueue(&gCrashScreen.queue, &gCrashScreen.mesg, 1);
-    osCreateThread(&gCrashScreen.thread, 253, crash_screen_thread_entry, NULL,
+    osCreateThread(&gCrashScreen.thread, 39, crash_screen_thread_entry, NULL,
                    gCrashScreen.stack + sizeof(gCrashScreen.stack), 0x80);
     osStartThread(&gCrashScreen.thread);
 }

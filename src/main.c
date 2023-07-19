@@ -5,7 +5,7 @@ s32 savestateCurrentSlot = 0;
 s32 savestate1Size = 0;
 s32 savestate2Size = 0;
 s32 savestate3Size = 0;
-s32 printPowerUp = 1;
+s32 boolPrintCustomText = 1;
 volatile s32 isSaveOrLoadActive = 0;
 s32 saveOrLoadStateMode = 0;
 
@@ -65,7 +65,7 @@ void pauseUntilDMANotBusy(void) {
 #define DPAD_RIGHT_CASE 2
 
 void loadstateMain(void) {
-    s32 register status = getStatusRegister();
+    u32 mask;
     //wait on rsp
     while (__osSpDeviceBusy() == 1) {}
 
@@ -81,7 +81,7 @@ void loadstateMain(void) {
     //invalidate caches
     osInvalICache((void*)0x80000000, 0x2000);
 	osInvalDCache((void*)0x80000000, 0x2000);
-    __osDisableInt();
+    mask = __osDisableInt();
     switch (savestateCurrentSlot) {
         case DPAD_LEFT_CASE:
             if (savestate1Size != 0 && savestate1Size != -1) {
@@ -91,14 +91,12 @@ void loadstateMain(void) {
         break;
         break;
     }
-    setStatusRegister(status);
-    __osRestoreInt();
+    __osRestoreInt(mask);
     isSaveOrLoadActive = 0; //allow thread to continue
 }
     
 void savestateMain(void) {
-    //push status
-    s32 register status = getStatusRegister();
+    u32 mask;
     //wait on rsp
     while (__osSpDeviceBusy() == 1) {}
 
@@ -115,15 +113,14 @@ void savestateMain(void) {
     osInvalICache((void*)0x80000000, 0x2000);
 	osInvalDCache((void*)0x80000000, 0x2000);
 
-    __osDisableInt();
+    mask = __osDisableInt();
     switch (savestateCurrentSlot) {
         case DPAD_LEFT_CASE:
             customMemCpy(ramAddrSavestateDataSlot1, ramStartAddr, ramEndAddr - ramStartAddr);
             savestate1Size = ramEndAddr - ramStartAddr;
         break;
     }
-    setStatusRegister(status);
-    __osRestoreInt();
+    __osRestoreInt(mask);
     isSaveOrLoadActive = 0; //allow thread to continue
 }
 
@@ -149,97 +146,94 @@ void checkInputsForSavestates(void) {
 extern u8 D_80160648;
 extern f32 D_80187B20; //is 0x20 into gPlayerActors[0]
 extern s16 D_80187BBC;
-
-typedef struct unkStructCt2 {
-    u8 unk_00; //sp2C
-    u8 unk_01; //sp2D
-    u8 unk_02; //sp2E
-    u8 unk_03; //sp2F
-    u8 unk_04; //sp30
-    u8 unk_05; //sp31
-    s8 unk_06; //sp32
-} unkStructCt2;
-
-typedef struct unkStructCt2_arg0 {
-    char unk_00[0x48];
-    s16 unk_48;
-    char unk_4A[0x22];
-    Vec3f pos;
-} unkStructCt2_arg0;
-
-void func_80039D3C(void);                                  /* extern */
-void printDigit(unkStructCt2*, void*);                         /* extern */
-void setTextPosition(s32, s32, s32);                     /* extern */
-void func_80050F54(s32);                                 /* extern */
-void func_80050F9C(s32);                                 /* extern */
-void setTextScale(f32, f32);                          /* extern */
-void func_80051034(s32);                                 /* extern */
-void setTextGradient(s32, u8, u8, s32, s32);                   /* extern */
-void func_800510A8(s32, s32, s32, s32);                        /* extern */
-void printIcon(unkStructCt2*, s32*);                            /* extern */
 extern u8 D_800ECFD0[]; //array of characters for integers
 extern s32 D_800F6410; //?
 extern f32 D_800F6498;
-
-typedef struct unkTextPointer2 {
-    char unk_00[0x0A];
-    s16 unk_0A;
-} unkTextPointer2;
-
-typedef struct unkTextPointer {
-    /* 0x00 */ char unk_00[8];
-    /* 0x08 */ unkTextPointer2* unk_08;
-    /* 0x0C */ char unk_0C[0x3C];
-    /* 0x48 */ s32 unk48;
-    /* 0x4C */ char unk_4C[4];
-    /* 0x50 */ s32 unk50;
-    /* 0x54 */ char unk_54[0x18];
-    /* 0x6C */ f32 unk6C;
-    /* 0x70 */ f32 unk70;
-    /* 0x74 */ char unk_74[0x88];
-    /* 0xFC */ s32 unkFC;
-} unkTextPointer;
-
-unkTextPointer testingVar = {0};
-unkTextPointer testingVar2 = {0};
-
-void func_800505E0(unkTextPointer*);
-s32 func_8005070C(unkTextPointer*); //moves text off screen if need be
-void func_80050428(unkTextPointer*, s32 value);
-s32 func_80050694(unkTextPointer*);
-void func_800507C8(unkTextPointer*);
 extern s32 D_80160808;
-
+void* crash_screen_copy_to_buf(void* dest, const char* src, u32 size);
+void setDebugTextPosition(s32 xPos, s32 yPos, s32 unk);
+void formatText(void* buffer, void* string);
+void printDebugText(void* string);
+extern s16 textStyle;
+extern u32 rngSeed;
 s32 curPowerupLock = 0;
 
-void func_80050770_Hook(unkTextPointer* arg0) {
-    if (D_80160808 != 0) {
-        func_80050694(arg0);
-        func_800505E0(arg0); //prints text
-    }
-    else if (func_8005070C(arg0) == 0) {
-        func_800505E0(arg0);
-    }
+void _sprintf(void* destination, void* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    _Printf((void*)crash_screen_copy_to_buf, destination, fmt, args);
+    va_end(args);
+}
 
-    if (printPowerUp == 0) {
+
+
+u32 func_800E0790_Hook(void) {
+    u32 y, z;
+    y = rngSeed * 4 + 2;
+    z = y + 3;
+    y = y * z;
+    rngSeed = y / 4;
+    calls++;
+    return rngSeed;
+}
+
+void copyCallsToPowerupCalls(void);
+void printCustomText(void);
+
+typedef struct TextPosition {
+    s32 xPos;
+    s32 yPos;
+} TextPosition;
+
+void printCallsUntilDecidedPowerup(void) {
+    u8 buffer[40];
+    TextPosition textPos = {61, 196};
+
+    _bzero(buffer, sizeof(buffer));
+    textStyle = 1;
+    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    _sprintf(buffer, "%d", callsAtPowerupDecision);
+    printDebugText(buffer);
+}
+
+void printCurrentSpeed(void) {
+    u8 buffer[40];
+    TextPosition textPos = {20, 210};
+
+    _bzero(buffer, sizeof(buffer));
+    textStyle = 1;
+    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    _sprintf(buffer, "%2.2f", gPlayerActor->speed);
+    printDebugText(buffer);
+}
+
+void printCurrentPowerupLock(void) {
+    TextPosition textPos = {61, 210};
+
+    textStyle = 1;
+    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    switch(curPowerupLock) {
+        case RANDOM:
+            printDebugText("Normal");
+            break;
+        case SPEED:
+            printDebugText("Speed");
+            break;
+        case X3:
+            printDebugText("x3");
+            break;
+    }
+}
+
+void printCustomTextInC(void) {
+    if (boolPrintCustomText == 0) {
         return;
     }
 
-    //else print speed
-    testingVar.unk48 = 4;   
-    testingVar.unkFC = 0;
-    testingVar.unk6C = -15.0f; //xpos
-    testingVar.unk70 = 205.0f; //ypos
-
-    func_80050428(&testingVar, gPlayerActor->speed);
-
-    //prints powerup
-    testingVar2.unk48 = 4;   
-    testingVar2.unkFC = 0;
-    testingVar2.unk6C = 30.0f; //xpos
-    testingVar2.unk70 = 205.0f; //ypos
-
-    func_80050428(&testingVar2, curPowerupLock);
+    //otherwise, print stuff
+    printCallsUntilDecidedPowerup();
+    printCurrentPowerupLock();
+    printCurrentSpeed();
 }
 
 void cBootFunction(void) { //ran once on boot
@@ -248,8 +242,14 @@ void cBootFunction(void) { //ran once on boot
     savestateCurrentSlot = 0;
     savestate1Size = 0;
     isSaveOrLoadActive = 0;
-    hookCode((void*)0x80050770, &func_80050770_Hook);
+    hookCode((void*)0x800E0790, &func_800E0790_Hook); //rng hook to track call total
+    hookCode((void*)0x8004FC08, &copyCallsToPowerupCalls); //when powerup is grabbed, copy calls to another var
+    hookCode((void*)0x800B3EA8, &printCustomText); //print our custom text when in game
+    
+    calls = 0;
+    callsAtPowerupDecision = 0;
 }
+
 
 f32 randomPowerUps[] = {
     0.125f, 0.25f, 0.375f, 0.5f,
@@ -272,10 +272,10 @@ void perFrameCFunction(void) {
     if (currentlyHeldButtons & L_BUTTON) {
         D_80187B20 = 32.0f;
     }
-
+    
     if (stateCooldown == 0) {
         if (currentlyPressedButtons & DPAD_UP) {
-            printPowerUp ^= 1;
+            boolPrintCustomText ^= 1;
         } else {
             checkInputsForSavestates();
         }
