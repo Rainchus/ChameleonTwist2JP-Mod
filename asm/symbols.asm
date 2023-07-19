@@ -45,6 +45,9 @@
 //.definelabel cFile, 0x800C2000
 .definelabel gCustomThread, 0x807F0000
 .definelabel gCrashScreen, 0x807F6000
+.definelabel voidOutCalls, 0x807FFFEC
+.definelabel callsEnteringSkyland, 0x807FFFF0
+.definelabel seedAtPowerup, 0x807FFFF4
 .definelabel calls, 0x807FFFF8
 .definelabel callsAtPowerupDecision, 0x807FFFFC
 .definelabel printDigit, 0x80050DA0
@@ -77,7 +80,7 @@
 .definelabel osViSwapBuffer, 0x800E2780
 .definelabel __osActiveQueue, 0x800F2AFC
 .definelabel osSetEventMesg, 0x800E0370
-
+.definelabel __osAiDeviceBusy, 0x800E8B50
 .definelabel osRecvMesg, 0x800D78A0
 .definelabel osStopThread, 0x800D89D0
 .definelabel osCreateMesgQueue, 0x800E1770
@@ -103,3 +106,4 @@
 .definelabel sprintf, 0x800E0804
 .definelabel textStyle, 0x80185796
 .definelabel _bzero, 0x800DA130
+.definelabel respawnZone, 0x800EAE00

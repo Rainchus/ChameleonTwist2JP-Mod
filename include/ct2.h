@@ -84,7 +84,10 @@ u32 __osDisableInt(void);
 void __osRestoreInt(u32 mask);
 extern u32 calls;
 extern u32 callsAtPowerupDecision;
-
+extern u32 seedAtPowerup;
+extern u32 callsEnteringSkyland;
+extern u32 voidOutCalls;
+extern s16 respawnZone;
 void setDebugTextPosition(s32 xPos, s32 yPos, s32 unk);
 void formatText(void* buffer, void* string);
 void printDebugText(void* string);

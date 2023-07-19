@@ -64,60 +64,84 @@ void pauseUntilDMANotBusy(void) {
 #define DPAD_UP_CASE 1
 #define DPAD_RIGHT_CASE 2
 
+u32 callsState = 0;
+u32 callsAtPowerupDecisionState = 0;
+u32 seedAtPowerupState = 0;
+u32 callsEnteringSkylandState = 0;
+u32 voidOutCallsState = 0;
+
+
 void loadstateMain(void) {
     u32 mask;
+    mask = __osDisableInt();
     //wait on rsp
-    while (__osSpDeviceBusy() == 1) {}
+    while (__osSpDeviceBusy() != 0) {}
 
     //wait on rdp
-    while ( __osDpDeviceBusy() == 1) {}
+    while ( __osDpDeviceBusy() != 0) {}
 
     //wait on SI
-    while (__osSiDeviceBusy() == 1) {}
+    while (__osSiDeviceBusy() != 0) {}
 
     //wait on PI
-    while (__osPiDeviceBusy() == 1) {}
+    while (__osPiDeviceBusy() != 0) {}
 
     //invalidate caches
-    osInvalICache((void*)0x80000000, 0x2000);
+    osInvalICache((void*)0x80000000, 0x4000);
 	osInvalDCache((void*)0x80000000, 0x2000);
-    mask = __osDisableInt();
+    
     switch (savestateCurrentSlot) {
         case DPAD_LEFT_CASE:
             if (savestate1Size != 0 && savestate1Size != -1) {
                 //decompress_lz4_ct_default(ramEndAddr - ramStartAddr, savestate1Size, ramAddrSavestateDataSlot1); //always decompresses to `ramStartAddr`
                 customMemCpy(ramStartAddr, ramAddrSavestateDataSlot1, savestate1Size);
-            }  
-        break;
+                calls = callsState;
+                callsAtPowerupDecision = callsAtPowerupDecisionState;
+                seedAtPowerup = seedAtPowerupState;
+                callsEnteringSkyland = callsEnteringSkylandState;
+                voidOutCalls = voidOutCallsState;
+            }
         break;
     }
+
+
+    osWritebackDCacheAll();
     __osRestoreInt(mask);
     isSaveOrLoadActive = 0; //allow thread to continue
 }
-    
+
 void savestateMain(void) {
     u32 mask;
+    mask = __osDisableInt();
+
+    osWritebackDCacheAll();
     //wait on rsp
-    while (__osSpDeviceBusy() == 1) {}
+    while (__osSpDeviceBusy() != 0) {}
 
     //wait on rdp
-    while ( __osDpDeviceBusy() == 1) {}
+    while ( __osDpDeviceBusy() != 0) {}
 
     //wait on SI
-    while (__osSiDeviceBusy() == 1) {}
+    while (__osSiDeviceBusy() != 0) {}
 
     //wait on PI
-    while (__osPiDeviceBusy() == 1) {}
+    while (__osPiDeviceBusy() != 0) {}
 
+    
     //invalidate caches
-    osInvalICache((void*)0x80000000, 0x2000);
-	osInvalDCache((void*)0x80000000, 0x2000);
+    osInvalICache((void*)0x80000000, 0x4000);
+    osInvalDCache((void*)0x80000000, 0x2000);
 
-    mask = __osDisableInt();
+    
     switch (savestateCurrentSlot) {
         case DPAD_LEFT_CASE:
             customMemCpy(ramAddrSavestateDataSlot1, ramStartAddr, ramEndAddr - ramStartAddr);
             savestate1Size = ramEndAddr - ramStartAddr;
+            callsState = calls;
+            callsAtPowerupDecisionState = callsAtPowerupDecision;
+            seedAtPowerupState = seedAtPowerup;
+            callsEnteringSkylandState = callsEnteringSkyland;
+            voidOutCallsState = voidOutCalls;
         break;
     }
     __osRestoreInt(mask);
@@ -156,6 +180,7 @@ void formatText(void* buffer, void* string);
 void printDebugText(void* string);
 extern s16 textStyle;
 extern u32 rngSeed;
+void recordCallsAtVoidOut(void);
 s32 curPowerupLock = 0;
 
 void _sprintf(void* destination, void* fmt, ...) {
@@ -166,16 +191,17 @@ void _sprintf(void* destination, void* fmt, ...) {
 }
 
 
+u32 func_800E0790_Hook(void);
 
-u32 func_800E0790_Hook(void) {
-    u32 y, z;
-    y = rngSeed * 4 + 2;
-    z = y + 3;
-    y = y * z;
-    rngSeed = y / 4;
-    calls++;
-    return rngSeed;
-}
+// u32 func_800E0790_Hook(void) {
+//     u32 y, z;
+//     y = rngSeed * 4 + 2;
+//     z = y + 3;
+//     y = y * z;
+//     rngSeed = y / 4;
+//     calls++;
+//     return rngSeed;
+// }
 
 void copyCallsToPowerupCalls(void);
 void printCustomText(void);
@@ -207,6 +233,61 @@ void printCurrentSpeed(void) {
     printDebugText(buffer);
 }
 
+void printCurrentRespawnZone(void) {
+    u8 buffer[40];
+    TextPosition textPos = {20, 196};
+
+    _bzero(buffer, sizeof(buffer));
+    textStyle = 1;
+    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    _sprintf(buffer, "%02d", respawnZone);
+    printDebugText(buffer);
+}
+
+void printCurrentSeed(void) {
+    u8 buffer[40];
+    TextPosition textPos = {160, 210};
+
+    _bzero(buffer, sizeof(buffer));
+    textStyle = 1;
+    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    _sprintf(buffer, "Seed: 0x%08X", rngSeed);
+    printDebugText(buffer);
+}
+
+void printCallsEnteringSkyland(void) {
+    u8 buffer[40];
+    TextPosition textPos = {152, 182};
+
+    _bzero(buffer, sizeof(buffer));
+    textStyle = 1;
+    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    _sprintf(buffer, "SLCalls: %d", callsEnteringSkyland);
+    printDebugText(buffer);
+}
+
+void printCallsAfterChosenPowerup(void) {
+    u8 buffer[40];
+    TextPosition textPos = {155, 196};
+
+    _bzero(buffer, sizeof(buffer));
+    textStyle = 1;
+    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    _sprintf(buffer, "Calls: %d", calls);
+    printDebugText(buffer);
+}
+
+void printVoidOutCalls(void) {
+    u8 buffer[40];
+    TextPosition textPos = {160, 210};
+
+    _bzero(buffer, sizeof(buffer));
+    textStyle = 1;
+    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    _sprintf(buffer, "Void: %d", voidOutCalls);
+    printDebugText(buffer);
+}
+
 void printCurrentPowerupLock(void) {
     TextPosition textPos = {61, 210};
 
@@ -229,13 +310,34 @@ void printCustomTextInC(void) {
     if (boolPrintCustomText == 0) {
         return;
     }
+    if (callsEnteringSkyland == 0) {
+        callsEnteringSkyland = calls;
+    }
 
     //otherwise, print stuff
-    printCallsUntilDecidedPowerup();
+    //printCallsUntilDecidedPowerup();
     printCurrentPowerupLock();
     printCurrentSpeed();
+    //printCurrentSeed();
+    //printCallsAfterChosenPowerup();
+    //printCallsEnteringSkyland();
+    //printVoidOutCalls();
+    printCurrentRespawnZone();
 }
-
+void hookAt80026750(void);
+void hookAt800D5B64(void);
+void hookAt800DE480(void);
+void hookAt800E7F98(void);
+void hookAt800D58E8(void);
+void hookAt800D5CE8(void);
+void hookAt800D6C04(void);
+void hookAt800D4240(void);
+void hookAt800D3FBC(void);
+void hookAt800CBDC0(void);
+void hookAt8002AB64(void);
+void hookAt800D6C10(void);
+void osPiStartDmaHook(void);
+void osEPiStartDmaHook(void);
 void cBootFunction(void) { //ran once on boot
     crash_screen_init();
     stateCooldown = 0;
@@ -243,11 +345,42 @@ void cBootFunction(void) { //ran once on boot
     savestate1Size = 0;
     isSaveOrLoadActive = 0;
     hookCode((void*)0x800E0790, &func_800E0790_Hook); //rng hook to track call total
-    hookCode((void*)0x8004FC08, &copyCallsToPowerupCalls); //when powerup is grabbed, copy calls to another var
+    hookCode((void*)0x8004FBD0, &copyCallsToPowerupCalls); //when powerup is grabbed, copy calls to another var
     hookCode((void*)0x800B3EA8, &printCustomText); //print our custom text when in game
+    hookCode((void*)0x8004E3DC, &recordCallsAtVoidOut);
+
+    //time to randomly guess at fixing savestates wheeeeee
+    //hookCode((void*)0x80026750, &hookAt80026750);//
+    //hookCode((void*)0x800D5B64, &hookAt800D5B64);//
+    //hookCode((void*)0x800DE480, &hookAt800DE480);//(adds stability?)
+    //hookCode((void*)0x800E7F98, &hookAt800E7F98);//
+    //hookCode((void*)0x800D58E8, &hookAt800D58E8);//
+    //hookCode((void*)0x800D5CE8, &hookAt800D5CE8);//
+    //hookCode((void*)0x800D6C04, &hookAt800D6C04);//
+    hookCode((void*)0x800D4240, &hookAt800D4240); //(probably keep this one on, increases stability?)
+    //hookCode((void*)0x800D3FBC, &hookAt800D3FBC); //(bad hook)
+    //hookCode((void*)0x800CBDC0, &hookAt800CBDC0);//
+    //hookCode((void*)0x8002AB64, &hookAt8002AB64);
+
+    //more attempts, fun stuff
+    //hookCode((void*)0x800D6C10, &hookAt800D6C10);
+
+    hookCode((void*)0x800DF584, &osPiStartDmaHook);
+    hookCode((void*)0x800E1590, &osEPiStartDmaHook);
+
     
+
     calls = 0;
     callsAtPowerupDecision = 0;
+    seedAtPowerup = 0;
+    callsEnteringSkyland = 0;
+    voidOutCalls = 0;
+
+    callsState = 0;
+    callsAtPowerupDecisionState = 0;
+    seedAtPowerupState = 0;
+    callsEnteringSkylandState = 0;
+    voidOutCallsState = 0;
 }
 
 
