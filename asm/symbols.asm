@@ -45,6 +45,7 @@
 //.definelabel cFile, 0x800C2000
 .definelabel gCustomThread, 0x807F0000
 .definelabel gCrashScreen, 0x807F6000
+.definelabel savestate1Size, 0x807FFFE8
 .definelabel voidOutCalls, 0x807FFFEC
 .definelabel callsEnteringSkyland, 0x807FFFF0
 .definelabel seedAtPowerup, 0x807FFFF4
@@ -59,7 +60,7 @@
 .definelabel currentlyHeldButtons, 0x800FF1C0
 .definelabel currentlyPressedButtons, 0x800FF1C6
 .definelabel D_80160648, 0x80160648
-.definelabel D_80187BBC, 0x80187BBC
+.definelabel playerHealth, 0x80187BBC
 .definelabel D_80187b20, 0x80187b20
 
 .definelabel func_800505E0, 0x800505E0
@@ -107,3 +108,13 @@
 .definelabel textStyle, 0x80185796
 .definelabel _bzero, 0x800DA130
 .definelabel respawnZone, 0x800EAE00
+.definelabel unkStep, 0x800EAF60
+.definelabel debugFlag, 0x800EAE64
+.definelabel textRed, 0x801857A8
+.definelabel textBlue, 0x801857AA
+.definelabel textGreen, 0x801857AC
+.definelabel textOpacity, 0x801857AE
+.definelabel ifTextColor, 0x801857B0
+.definelabel textKerning, 0x801857B2
+.definelabel textWidth, 0x801857B4
+.definelabel textHeight, 0x801857B8

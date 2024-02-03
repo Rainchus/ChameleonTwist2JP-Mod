@@ -70,6 +70,17 @@ extern void test_lz4(const u8* srcData, int srcSize);
 extern void* my_memcpy(void* dst, const void* src, s32 n);
 extern void* my_memmove(void* dest, const void* src, s32 n);
 
+extern f32 textWidth;
+extern f32 textHeight;
+
+extern s16 textRed;
+extern s16 textBlue;
+extern s16 textGreen;
+extern s16 textOpacity;
+extern s16 ifTextColor;
+extern s16 textKerning;
+
+
 void decompress_lz4_ct_default(int srcSize, int savestateCompressedSize, u8* compressedBuffer);
 s32 compress_lz4_ct_default(const u8* srcData, int srcSize, u8* bufferAddr);
 
@@ -91,6 +102,7 @@ extern s16 respawnZone;
 void setDebugTextPosition(s32 xPos, s32 yPos, s32 unk);
 void formatText(void* buffer, void* string);
 void printDebugText(void* string);
+extern s32 curStringPrintingIndex;
 void drawDebugScreenText(void);
 void _bzero(void* buffer, s32 size);
 #define PI_BASE_REG		0x04600000

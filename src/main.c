@@ -1,8 +1,27 @@
 #include "../include/ct2.h"
 
+//func_800D6050 prints debug stuff
+
+s32 holdDpadDirectionFrames = 0;
+s32 prevOption = 0;
+s32 infiniteHealthBool = 0;
+
+typedef struct MenuInstance {
+    s16 cursor;
+    s16 stageIndex;
+    s16 unk_04;
+    s16 unk_timer;
+    u16 inputs;
+} MenuInstance;
+
+MenuInstance* MenuInstancePointer = 0;
+
+extern s16 unkStep;
+extern s16 debugFlag;
+
 s32 stateCooldown = 0; //does this work??
 s32 savestateCurrentSlot = 0;
-s32 savestate1Size = 0;
+extern s32 savestate1Size;
 s32 savestate2Size = 0;
 s32 savestate3Size = 0;
 s32 boolPrintCustomText = 1;
@@ -20,7 +39,7 @@ extern u16 currentlyHeldButtons;
 #define SAVE_MODE 0
 #define LOAD_MODE 1
 
-#define ramStartAddr 0x800E87E0
+#define ramStartAddr 0x800E87D0 //
 #define ramEndAddr 0x80400000 //can probably skip the frame buffer at around 0x80360000 - 0x80400000 approximately
 
 #define DPAD_UP 0x0800
@@ -33,6 +52,11 @@ extern u16 currentlyHeldButtons;
 #define A_BUTTON 0x8000
 
 extern CustomThread gCustomThread;
+
+void SetTextWidthAndHeight(f32 width, f32 height) {
+    textWidth = width;
+    textHeight = height;
+}
 
 void hookCode(s32* patchAddr, void* jumpLocation) {
     jumpLocation = (void*)(u32)((((u32)jumpLocation & 0x00FFFFFF) >> 2) | 0x08000000);
@@ -73,6 +97,7 @@ u32 voidOutCallsState = 0;
 
 void loadstateMain(void) {
     u32 mask;
+    u32 savestateHeader = (*(u32*)ramAddrSavestateDataSlot1); //not really a header, but savestates always start with 0x4620610944222000
     mask = __osDisableInt();
     //wait on rsp
     while (__osSpDeviceBusy() != 0) {}
@@ -90,20 +115,12 @@ void loadstateMain(void) {
     osInvalICache((void*)0x80000000, 0x4000);
 	osInvalDCache((void*)0x80000000, 0x2000);
     
-    switch (savestateCurrentSlot) {
-        case DPAD_LEFT_CASE:
-            if (savestate1Size != 0 && savestate1Size != -1) {
-                //decompress_lz4_ct_default(ramEndAddr - ramStartAddr, savestate1Size, ramAddrSavestateDataSlot1); //always decompresses to `ramStartAddr`
-                customMemCpy(ramStartAddr, ramAddrSavestateDataSlot1, savestate1Size);
-                calls = callsState;
-                callsAtPowerupDecision = callsAtPowerupDecisionState;
-                seedAtPowerup = seedAtPowerupState;
-                callsEnteringSkyland = callsEnteringSkylandState;
-                voidOutCalls = voidOutCallsState;
-            }
-        break;
+    //instead of checking savestate size, check savestate header to see if it's valid
+    //this will allow the user to load a savestate after crashing
+    
+    if (savestateHeader == 0x03E00008) {
+        customMemCpy(ramStartAddr, ramAddrSavestateDataSlot1, (u32)ramEndAddr - (u32)ramStartAddr);
     }
-
 
     osWritebackDCacheAll();
     __osRestoreInt(mask);
@@ -132,24 +149,19 @@ void savestateMain(void) {
     osInvalICache((void*)0x80000000, 0x4000);
     osInvalDCache((void*)0x80000000, 0x2000);
 
-    
-    switch (savestateCurrentSlot) {
-        case DPAD_LEFT_CASE:
-            customMemCpy(ramAddrSavestateDataSlot1, ramStartAddr, ramEndAddr - ramStartAddr);
-            savestate1Size = ramEndAddr - ramStartAddr;
-            callsState = calls;
-            callsAtPowerupDecisionState = callsAtPowerupDecision;
-            seedAtPowerupState = seedAtPowerup;
-            callsEnteringSkylandState = callsEnteringSkyland;
-            voidOutCallsState = voidOutCalls;
-        break;
-    }
+    customMemCpy(ramAddrSavestateDataSlot1, ramStartAddr, ramEndAddr - ramStartAddr);
+    //savestate1Size = ramEndAddr - ramStartAddr;
+
     __osRestoreInt(mask);
     isSaveOrLoadActive = 0; //allow thread to continue
 }
 
 void checkInputsForSavestates(void) {
     savestateCurrentSlot = 0;//set to 0
+
+    if (unkStep != 3) { //in overworld/level
+        return;
+    }
 
     if (currentlyPressedButtons & DPAD_LEFT) {
         isSaveOrLoadActive = 1;
@@ -169,7 +181,7 @@ void checkInputsForSavestates(void) {
 
 extern u8 D_80160648;
 extern f32 D_80187B20; //is 0x20 into gPlayerActors[0]
-extern s16 D_80187BBC;
+extern s16 playerHealth;
 extern u8 D_800ECFD0[]; //array of characters for integers
 extern s32 D_800F6410; //?
 extern f32 D_800F6498;
@@ -211,6 +223,103 @@ typedef struct TextPosition {
     s32 yPos;
 } TextPosition;
 
+s32 curStringPrintingIndex = 0;
+
+char* MenuStrings0[] = {
+    // "PROCESS MENU",
+    "Game",
+    "Object",
+    "Sprite",
+    "Texture",
+    "Sound",
+    "Opening",
+    "Ending",
+    "Title",
+    "PackMenu",
+    "FirstPack",
+    "StageClr",
+    "Minigame",
+    "PackTest",
+    "Game Over",
+    "Intro",
+    "Message",
+    "Config",
+};
+
+TextPosition MenuTextPositions[] = {
+// {20, 40},
+{20, 45},
+{20, 55},
+{20, 65},
+{20, 75},
+{20, 85},
+{20, 95},
+{20, 105},
+{20, 115},
+{20, 125},
+{20, 135},
+{20, 145},
+{20, 155},
+{20, 165},
+{20, 175},
+{20, 185},
+{20, 195},
+{20, 205},
+};
+
+char* StageList[] = {
+/* 0 */ "Sky Land",
+/* 1 */ "Carnival Land",
+/* 2 */ "Ice Land",
+/* 3 */ "Great Edo Land",
+/* 4 */ "Toy Land",
+/* 5 */ "Pyramid Land"
+/* 6 */ "",
+/* 7 */ "",
+/* 8 */ "",
+/* 9 */ "",
+/* 10 */ "",
+/* 11 */ "Training Room 1",
+/* 12 */ "Training Room 2",
+/* 13 */ "Training Room 3",
+/* 14 */ "Training Room 4",
+/* 15 */ "Billiards",
+/* 16 */ "Bowling",
+/* 17 */ "Chess",
+/* 18 */ "",
+/* 19 */ "",
+/* 20 */ "",
+/* 21 */ "Mushroom Boss",
+/* 22 */ "Burger Boss",
+/* 23 */ "Wheelrus",
+/* 24 */ "Frog Boss",
+/* 25 */ "Robot Boss",
+/* 26 */ "Sphynx Boss",
+/* 27 */ "",
+/* 28 */ "",
+/* 29 */ "ContPak",
+/* 30 */ "Unknown",
+/* 31 */ "Credits 0",
+/* 32 */ "Credits 1",
+/* 33 */ "Credits 2",
+/* 34 */ "Credits 3",
+/* 35 */ "",
+/* 36 */ "",
+/* 37 */ "",
+/* 38 */ "",
+/* 39 */ "",
+/* 40 */ "",
+/* 41 */ "Sky Land Section 2",
+/* 42 */ "Carnival Land Section 2",
+/* 43 */ "Ice Hockey",
+/* 44 */ "Edo Land Section 2",
+/* 45 */ "Toy Land Section 2",
+/* 46 */ "Pyramid Land Section 2",
+/* 47 */ "",
+/* 48 */ "Carnival After Teacup",
+/* 49 */ "Ice Land Section 2",
+};
+
 void printCallsUntilDecidedPowerup(void) {
     u8 buffer[40];
     TextPosition textPos = {61, 196};
@@ -218,6 +327,8 @@ void printCallsUntilDecidedPowerup(void) {
     _bzero(buffer, sizeof(buffer));
     textStyle = 1;
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    SetTextWidthAndHeight(0.6f, 0.6f);
+    SetTextColor(255, 255, 255, 255);
     _sprintf(buffer, "%d", callsAtPowerupDecision);
     printDebugText(buffer);
 }
@@ -229,6 +340,8 @@ void printCurrentSpeed(void) {
     _bzero(buffer, sizeof(buffer));
     textStyle = 1;
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    SetTextWidthAndHeight(0.6f, 0.6f);
+    RemoveTextColor();
     _sprintf(buffer, "%2.2f", gPlayerActor->speed);
     printDebugText(buffer);
 }
@@ -240,8 +353,146 @@ void printCurrentRespawnZone(void) {
     _bzero(buffer, sizeof(buffer));
     textStyle = 1;
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
-    _sprintf(buffer, "%02d", respawnZone);
+    SetTextWidthAndHeight(0.6f, 0.6f);
+    SetTextColor(255, 255, 255, 255);
+    _sprintf(buffer, "Zone: %02d", respawnZone);
     printDebugText(buffer);
+}
+
+void SetTextColor(u8 red, u8 blue, u8 green, u8 alpha) {
+    textRed = red;
+    textBlue = blue;
+    textGreen = green;
+    textOpacity = alpha;
+    ifTextColor = 1;
+}
+
+void RemoveTextColor(void) {
+    ifTextColor = 0;
+}
+
+char* OffOrOnString[] = {
+    "OFF",
+    "ON"
+};
+
+void DisplayDebugMenu(void) {
+    u8 buffer[100];
+    int i;
+
+    if (MenuInstancePointer == 0) {
+        return;
+    }
+
+    if (MenuInstancePointer->stageIndex == 1 && prevOption != 0 && MenuInstancePointer->stageIndex != prevOption) {
+        MenuInstancePointer->stageIndex = prevOption;
+    }
+
+    if ((currentlyHeldButtons & R_BUTTON) && (currentlyPressedButtons & DPAD_RIGHT)) {
+        infiniteHealthBool ^=1;
+    }
+
+    textStyle = 1;
+    textKerning = 1;
+
+    _bzero(buffer, sizeof(buffer));
+    setDebugTextPosition(MenuTextPositions[0].xPos, MenuTextPositions[0].yPos - 15, 0x50);
+    SetTextWidthAndHeight(0.6f, 0.6f);
+    SetTextColor(255, 255, 255, 255);
+
+    _sprintf(buffer, "Inf Hp: %s", OffOrOnString[infiniteHealthBool]);
+    printDebugText(buffer);
+
+
+    if (MenuInstancePointer->cursor == 0) {
+        if (currentlyPressedButtons & DPAD_LEFT) { //dpad left
+            MenuInstancePointer->stageIndex--;
+        } else if (currentlyPressedButtons & DPAD_RIGHT) { //dpad right
+            MenuInstancePointer->stageIndex++;
+        }
+
+        if (currentlyHeldButtons & DPAD_LEFT || currentlyHeldButtons & DPAD_RIGHT) {
+            holdDpadDirectionFrames++;
+        } else {
+            holdDpadDirectionFrames = 0;
+        }
+
+        if (holdDpadDirectionFrames > 10) { //if held for 10 frames, quickly scroll
+            if (currentlyHeldButtons & 0x200) { //dpad left
+                MenuInstancePointer->stageIndex--;
+            } else if (currentlyHeldButtons & 0x100) { //dpad right
+                MenuInstancePointer->stageIndex++;
+            }
+        }
+
+
+        if (currentlyHeldButtons & DPAD_LEFT) { //dpad left
+            if (MenuInstancePointer->stageIndex == 10) { //7, 8, 9, 10 are glitchy/crash
+                MenuInstancePointer->stageIndex = 6;
+            } else if (MenuInstancePointer->stageIndex == 20) {
+                MenuInstancePointer->stageIndex = 17;
+            } else if (MenuInstancePointer->stageIndex == 40) {
+                MenuInstancePointer->stageIndex = 26;
+            } else if (MenuInstancePointer->stageIndex == 47) {
+                MenuInstancePointer->stageIndex = 46;
+            }
+        } else if (currentlyHeldButtons & DPAD_RIGHT) { //dpad right
+            if (MenuInstancePointer->stageIndex == 7) { //8, 9, 10 are glitchy/crash
+                MenuInstancePointer->stageIndex = 11;
+            } else if (MenuInstancePointer->stageIndex == 18) {
+                MenuInstancePointer->stageIndex = 21;
+            } else if (MenuInstancePointer->stageIndex == 27) {
+                MenuInstancePointer->stageIndex = 41;
+            } else if (MenuInstancePointer->stageIndex == 47) {
+                MenuInstancePointer->stageIndex = 48;
+            }
+        }
+
+
+    }
+
+    if (MenuInstancePointer->stageIndex > 49) {
+        MenuInstancePointer->stageIndex = 49;
+    }
+
+    if (MenuInstancePointer->stageIndex < 1) {
+        MenuInstancePointer->stageIndex = 1;
+    }
+
+    prevOption = MenuInstancePointer->stageIndex;
+
+    _bzero(buffer, sizeof(buffer));
+    setDebugTextPosition(MenuTextPositions[0].xPos + 105, MenuTextPositions[0].yPos, 0x32);
+    SetTextWidthAndHeight(0.6f, 0.6f);
+    SetTextColor(255, 255, 255, 255);
+
+    _sprintf(buffer, "%s", StageList[MenuInstancePointer->stageIndex - 1]);
+    printDebugText(buffer);
+    
+     
+
+    for (i = 0; i < ARRAY_COUNT(MenuStrings0); i++) {
+        _bzero(buffer, sizeof(buffer));
+        setDebugTextPosition(MenuTextPositions[i].xPos, MenuTextPositions[i].yPos, 0x32);
+        SetTextWidthAndHeight(0.6f, 0.6f);
+        SetTextColor(255, 255, 255, 255);
+    
+        if (MenuInstancePointer->cursor == i) {
+            SetTextColor(255, 255, 0, 255);
+        }
+        
+        if (i == 0) {
+            _sprintf(buffer, "%s %s: %d", MenuStrings0[i], "Stage", MenuInstancePointer->stageIndex);
+        } else {
+            _sprintf(buffer, "%s", MenuStrings0[i]);
+        }
+        printDebugText(buffer); 
+    }
+
+    
+    //setting it to 0 here will prevent a dangling pointer from occurring
+    MenuInstancePointer = 0; //this gets set back to a pointer by some asm code.
+
 }
 
 void printCurrentSeed(void) {
@@ -250,7 +501,10 @@ void printCurrentSeed(void) {
 
     _bzero(buffer, sizeof(buffer));
     textStyle = 1;
+    textKerning = 1;
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    SetTextWidthAndHeight(0.6f, 0.6f);
+    SetTextColor(255, 255, 255, 255);
     _sprintf(buffer, "Seed: 0x%08X", rngSeed);
     printDebugText(buffer);
 }
@@ -261,7 +515,10 @@ void printCallsEnteringSkyland(void) {
 
     _bzero(buffer, sizeof(buffer));
     textStyle = 1;
+    textKerning = 1;
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    SetTextWidthAndHeight(0.6f, 0.6f);
+    SetTextColor(255, 255, 255, 255);
     _sprintf(buffer, "SLCalls: %d", callsEnteringSkyland);
     printDebugText(buffer);
 }
@@ -272,7 +529,10 @@ void printCallsAfterChosenPowerup(void) {
 
     _bzero(buffer, sizeof(buffer));
     textStyle = 1;
+    textKerning = 1;
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    SetTextWidthAndHeight(0.6f, 0.6f);
+    SetTextColor(255, 255, 255, 255);
     _sprintf(buffer, "Calls: %d", calls);
     printDebugText(buffer);
 }
@@ -283,7 +543,10 @@ void printVoidOutCalls(void) {
 
     _bzero(buffer, sizeof(buffer));
     textStyle = 1;
+    textKerning = 1;
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    SetTextWidthAndHeight(0.6f, 0.6f);
+    SetTextColor(255, 255, 255, 255);
     _sprintf(buffer, "Void: %d", voidOutCalls);
     printDebugText(buffer);
 }
@@ -292,6 +555,9 @@ void printCurrentPowerupLock(void) {
     TextPosition textPos = {61, 210};
 
     textStyle = 1;
+    textKerning = 1;
+    SetTextWidthAndHeight(0.6f, 0.6f);
+    RemoveTextColor();
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
     switch(curPowerupLock) {
         case RANDOM:
@@ -324,6 +590,7 @@ void printCustomTextInC(void) {
     //printVoidOutCalls();
     printCurrentRespawnZone();
 }
+
 void hookAt80026750(void);
 void hookAt800D5B64(void);
 void hookAt800DE480(void);
@@ -342,7 +609,7 @@ void cBootFunction(void) { //ran once on boot
     crash_screen_init();
     stateCooldown = 0;
     savestateCurrentSlot = 0;
-    savestate1Size = 0;
+    //savestate1Size = 0;
     isSaveOrLoadActive = 0;
     hookCode((void*)0x800E0790, &func_800E0790_Hook); //rng hook to track call total
     hookCode((void*)0x8004FBD0, &copyCallsToPowerupCalls); //when powerup is grabbed, copy calls to another var
@@ -400,8 +667,13 @@ f32 always3XPowerUps[] = {
 };
 
 void perFrameCFunction(void) {
+    debugFlag = 1;
     D_80160648 = 0x3F; //unlock all levels
-    D_80187BBC = 10;
+
+    if (infiniteHealthBool == 1) {
+        playerHealth = 10;
+    }
+    
     if (currentlyHeldButtons & L_BUTTON) {
         D_80187B20 = 32.0f;
     }
@@ -414,10 +686,12 @@ void perFrameCFunction(void) {
         }
     }
 
-    if (currentlyPressedButtons & DPAD_DOWN) {
-        curPowerupLock++;
-        if (curPowerupLock >= 3) { //if advanced to 3, reset to 0
-            curPowerupLock = 0;
+    if (unkStep == 3) {
+        if (currentlyPressedButtons & DPAD_DOWN) {
+            curPowerupLock++;
+            if (curPowerupLock >= 3) { //if advanced to 3, reset to 0
+                curPowerupLock = 0;
+            }
         }
     }
 

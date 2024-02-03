@@ -5,9 +5,10 @@
 bootHook:
 
 LI a0, 0x7C1400
-LI a1, 0x80400000
+LUI a1, 0x8040
+LUI a2, 0x0002
 JAL dma_copy
-ORI a2, r0, 0xFFF0
+ORI a2, a2, 0x0000
 J copiedHookCode
 NOP
 
@@ -254,6 +255,19 @@ NOP
 NOP
 JR RA
 NOP
+
+beforePrintSetVariable:
+ADDIU sp, sp, -0x18
+SW ra, 0x0010 (sp)
+SW a0, 0x0014 (sp)
+JAL DisplayDebugMenu
+NOP
+LW ra, 0x0010 (sp)
+LW a0, 0x0014 (sp)
+ADDIU sp, sp, 0x18
+LUI a3, 0x8010
+J 0x802032DC
+ADDIU a3, a3, 0xF1C0
 
 .importobj "obj/crash.o"
 .importobj "obj/main.o"

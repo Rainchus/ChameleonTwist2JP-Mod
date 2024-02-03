@@ -250,3 +250,20 @@ J 0x800E15A0
 NOP
 
 
+//hook 0 for debug menu
+//.org 0x800D6050
+//J PrintDebugMenu
+//ADDU a0, r0, a1
+
+
+.headersize 0x802032D4 - 0x20B844
+.org 0x802032D4
+J beforePrintSetVariable
+NOP
+
+.org 0x802034F4 //remove check and also store pointer for use in our C code
+LUI v0, hi(MenuInstancePointer)
+SW a1, lo(MenuInstancePointer) (v0)
+
+.org 0x80203590 //remove Z menu from debug menu
+ORI t6, r0, 0
