@@ -1,10 +1,13 @@
 #include "../include/ct2.h"
+#include <stdarg.h>
 
 //func_800D6050 prints debug stuff
 
 s32 holdDpadDirectionFrames = 0;
 s32 prevOption = 0;
 s32 infiniteHealthBool = 0;
+
+extern Gfx* gMainGfxPosPtr;
 
 typedef struct MenuInstance {
     s16 cursor;
@@ -42,16 +45,10 @@ extern u16 currentlyHeldButtons;
 #define ramStartAddr 0x800E87D0 //
 #define ramEndAddr 0x80400000 //can probably skip the frame buffer at around 0x80360000 - 0x80400000 approximately
 
-#define DPAD_UP 0x0800
-#define DPAD_DOWN 0x0400
-#define DPAD_LEFT 0x0200
-#define DPAD_RIGHT 0x0100
-#define L_BUTTON 0x0020
-#define R_BUTTON 0x0010
-#define B_BUTTON 0x4000
-#define A_BUTTON 0x8000
-
 extern CustomThread gCustomThread;
+
+void SetTextColor(u8 red, u8 blue, u8 green, u8 alpha);
+void RemoveTextColor(void);
 
 void SetTextWidthAndHeight(f32 width, f32 height) {
     textWidth = width;
@@ -84,9 +81,9 @@ void pauseUntilDMANotBusy(void) {
 }
 
 #define ramAddrSavestateDataSlot1 (void*)0x804C0000
-#define DPAD_LEFT_CASE 0
-#define DPAD_UP_CASE 1
-#define DPAD_RIGHT_CASE 2
+#define L_JPAD_CASE 0
+#define U_JPAD_CASE 1
+#define R_JPAD_CASE 2
 
 u32 callsState = 0;
 u32 callsAtPowerupDecisionState = 0;
@@ -119,7 +116,7 @@ void loadstateMain(void) {
     //this will allow the user to load a savestate after crashing
     
     if (savestateHeader == 0x03E00008) {
-        customMemCpy(ramStartAddr, ramAddrSavestateDataSlot1, (u32)ramEndAddr - (u32)ramStartAddr);
+        customMemCpy((void*)ramStartAddr, ramAddrSavestateDataSlot1, (u32)ramEndAddr - (u32)ramStartAddr);
     }
 
     osWritebackDCacheAll();
@@ -149,7 +146,7 @@ void savestateMain(void) {
     osInvalICache((void*)0x80000000, 0x4000);
     osInvalDCache((void*)0x80000000, 0x2000);
 
-    customMemCpy(ramAddrSavestateDataSlot1, ramStartAddr, ramEndAddr - ramStartAddr);
+    customMemCpy((void*)ramAddrSavestateDataSlot1, (void*)ramStartAddr, ramEndAddr - ramStartAddr);
     //savestate1Size = ramEndAddr - ramStartAddr;
 
     __osRestoreInt(mask);
@@ -163,13 +160,13 @@ void checkInputsForSavestates(void) {
         return;
     }
 
-    if (currentlyPressedButtons & DPAD_LEFT) {
+    if (currentlyPressedButtons & L_JPAD) {
         isSaveOrLoadActive = 1;
         osCreateThread(&gCustomThread.thread, 255, (void*)savestateMain, NULL,
                 gCustomThread.stack + sizeof(gCustomThread.stack), 255);
         osStartThread(&gCustomThread.thread);
         stateCooldown = 5;
-    } else if (currentlyPressedButtons & DPAD_RIGHT) {
+    } else if (currentlyPressedButtons & R_JPAD) {
         isSaveOrLoadActive = 1;
         osCreateThread(&gCustomThread.thread, 255, (void*)loadstateMain, NULL,
                 gCustomThread.stack + sizeof(gCustomThread.stack), 255);
@@ -194,6 +191,8 @@ extern s16 textStyle;
 extern u32 rngSeed;
 void recordCallsAtVoidOut(void);
 s32 curPowerupLock = 0;
+
+void _Printf(void* destination, void* fmt, ...);
 
 void _sprintf(void* destination, void* fmt, ...) {
     va_list args;
@@ -388,7 +387,7 @@ void DisplayDebugMenu(void) {
         MenuInstancePointer->stageIndex = prevOption;
     }
 
-    if ((currentlyHeldButtons & R_BUTTON) && (currentlyPressedButtons & DPAD_RIGHT)) {
+    if ((currentlyHeldButtons & R_TRIG) && (currentlyPressedButtons & R_JPAD)) {
         infiniteHealthBool ^=1;
     }
 
@@ -405,13 +404,13 @@ void DisplayDebugMenu(void) {
 
 
     if (MenuInstancePointer->cursor == 0) {
-        if (currentlyPressedButtons & DPAD_LEFT) { //dpad left
+        if (currentlyPressedButtons & L_JPAD) { //dpad left
             MenuInstancePointer->stageIndex--;
-        } else if (currentlyPressedButtons & DPAD_RIGHT) { //dpad right
+        } else if (currentlyPressedButtons & R_JPAD) { //dpad right
             MenuInstancePointer->stageIndex++;
         }
 
-        if (currentlyHeldButtons & DPAD_LEFT || currentlyHeldButtons & DPAD_RIGHT) {
+        if (currentlyHeldButtons & L_JPAD || currentlyHeldButtons & R_JPAD) {
             holdDpadDirectionFrames++;
         } else {
             holdDpadDirectionFrames = 0;
@@ -426,7 +425,7 @@ void DisplayDebugMenu(void) {
         }
 
 
-        if (currentlyHeldButtons & DPAD_LEFT) { //dpad left
+        if (currentlyHeldButtons & L_JPAD) { //dpad left
             if (MenuInstancePointer->stageIndex == 10) { //7, 8, 9, 10 are glitchy/crash
                 MenuInstancePointer->stageIndex = 6;
             } else if (MenuInstancePointer->stageIndex == 20) {
@@ -436,7 +435,7 @@ void DisplayDebugMenu(void) {
             } else if (MenuInstancePointer->stageIndex == 47) {
                 MenuInstancePointer->stageIndex = 46;
             }
-        } else if (currentlyHeldButtons & DPAD_RIGHT) { //dpad right
+        } else if (currentlyHeldButtons & R_JPAD) { //dpad right
             if (MenuInstancePointer->stageIndex == 7) { //8, 9, 10 are glitchy/crash
                 MenuInstancePointer->stageIndex = 11;
             } else if (MenuInstancePointer->stageIndex == 18) {
@@ -674,12 +673,12 @@ void perFrameCFunction(void) {
         playerHealth = 10;
     }
     
-    if (currentlyHeldButtons & L_BUTTON) {
+    if (currentlyHeldButtons & L_TRIG) {
         D_80187B20 = 32.0f;
     }
     
     if (stateCooldown == 0) {
-        if (currentlyPressedButtons & DPAD_UP) {
+        if (currentlyPressedButtons & U_JPAD) {
             boolPrintCustomText ^= 1;
         } else {
             checkInputsForSavestates();
@@ -687,7 +686,7 @@ void perFrameCFunction(void) {
     }
 
     if (unkStep == 3) {
-        if (currentlyPressedButtons & DPAD_DOWN) {
+        if (currentlyPressedButtons & D_JPAD) {
             curPowerupLock++;
             if (curPowerupLock >= 3) { //if advanced to 3, reset to 0
                 curPowerupLock = 0;

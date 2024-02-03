@@ -1,5 +1,7 @@
-#include "types.h"
-#include "OS.h"
+#ifndef _CT2_H_
+#define _CT2_H_
+
+#include "ultra64.h"
 
 extern u64 __osCurrentTime;
 extern u32 osMemSize;
@@ -107,6 +109,11 @@ void drawDebugScreenText(void);
 void _bzero(void* buffer, s32 size);
 #define PI_BASE_REG		0x04600000
 
+/// Linker symbol address, as in `ld_addrs.h`.
+typedef u8 Addr[];
+
+#define va_arg(AP,TYPE) (AP = (__gnuc_va_list) ((char *) (AP) + __va_rounded_size (TYPE)), *((TYPE *) (void *) ((char *) (AP) - ((sizeof (TYPE) < __va_rounded_size (char) ? sizeof (TYPE) : __va_rounded_size (TYPE))))))
+
 /* PI DRAM address (R/W): [23:0] starting RDRAM address */
 #define PI_DRAM_ADDR_REG	(PI_BASE_REG+0x00)	/* DRAM address */
 
@@ -125,11 +132,9 @@ void _bzero(void* buffer, s32 size);
  */
 #define PI_STATUS_REG		(PI_BASE_REG+0x10)
 
-#define PI_STATUS_DMA_BUSY  (1 << 0)
-#define PI_STATUS_IO_BUSY   (1 << 1)
-#define PI_STATUS_ERROR     (1 << 2)
-
 #define WAIT_ON_IOBUSY(stat)                                                                \
     while (stat = IO_READ(PI_STATUS_REG), stat & (PI_STATUS_IO_BUSY | PI_STATUS_DMA_BUSY))  \
         ;                                                                                   \
     (void)0
+
+#endif

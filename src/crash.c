@@ -1,4 +1,5 @@
 #include "../include/ct2.h"
+#include <stdarg.h>
 
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240

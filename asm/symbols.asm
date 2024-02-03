@@ -118,3 +118,4 @@
 .definelabel textKerning, 0x801857B2
 .definelabel textWidth, 0x801857B4
 .definelabel textHeight, 0x801857B8
+.definelabel gMainGfxPosPtr, 0x80101440
