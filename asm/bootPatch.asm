@@ -65,6 +65,14 @@ J moreReplacedCode
 J perFrameASM
 NOP
 
+//.org 0x800267A0
+//J DLWriteHookAsm
+//NOP
+
+.org 0x80031540
+J DLWriteHookAsm2
+ADDIU sp, sp, 0xB0
+
 //7C1400
 .headersize 0x7FC3EC00
 .org 0x80400000
@@ -147,6 +155,22 @@ LHU t6, 0xAF60 (t6)
 
 //80400000
 //0x7C1400
+
+//DLWriteHookAsm:
+//JAL DLWriteHook
+//NOP
+//J 0x800267A8
+//NOP
+
+DLWriteHookAsm2:
+ADDIU sp, sp, -0x18
+SW ra, 0x0014 (sp)
+JAL DLWriteHook
+NOP
+LW ra, 0x0014 (sp)
+JR RA
+ADDIU sp, sp, 0x18
+
 
 __osDpDeviceBusy:
 LUI t6, 0xA410

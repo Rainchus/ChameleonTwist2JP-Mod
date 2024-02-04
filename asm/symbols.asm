@@ -119,3 +119,4 @@
 .definelabel textWidth, 0x801857B4
 .definelabel textHeight, 0x801857B8
 .definelabel gMainGfxPosPtr, 0x80101440
+.definelabel func_8002616C, 0x8002616C
