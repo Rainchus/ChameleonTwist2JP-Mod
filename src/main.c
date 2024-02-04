@@ -162,23 +162,21 @@ void savestateMain(void) {
 void checkInputsForSavestates(void) {
     savestateCurrentSlot = 0;//set to 0
 
-    if (unkStep != 3) { //in overworld/level
-        return;
-    }
-
-    if (currentlyPressedButtons & L_JPAD) {
-        isSaveOrLoadActive = 1;
-        osCreateThread(&gCustomThread.thread, 255, (void*)savestateMain, NULL,
-                gCustomThread.stack + sizeof(gCustomThread.stack), 255);
-        osStartThread(&gCustomThread.thread);
-        stateCooldown = 5;
-    } else if (currentlyPressedButtons & R_JPAD) {
-        isSaveOrLoadActive = 1;
-        osCreateThread(&gCustomThread.thread, 255, (void*)loadstateMain, NULL,
-                gCustomThread.stack + sizeof(gCustomThread.stack), 255);
-        osStartThread(&gCustomThread.thread);
-        currentlyPressedButtons = 0;
-        stateCooldown = 5; 
+    if (unkStep == 3 || unkStep == 2 || unkStep == 0x12) { //in overworld/bootup/titlescreen
+        if (currentlyPressedButtons & L_JPAD) {
+            isSaveOrLoadActive = 1;
+            osCreateThread(&gCustomThread.thread, 255, (void*)savestateMain, NULL,
+                    gCustomThread.stack + sizeof(gCustomThread.stack), 255);
+            osStartThread(&gCustomThread.thread);
+            stateCooldown = 5;
+        } else if (currentlyPressedButtons & R_JPAD) {
+            isSaveOrLoadActive = 1;
+            osCreateThread(&gCustomThread.thread, 255, (void*)loadstateMain, NULL,
+                    gCustomThread.stack + sizeof(gCustomThread.stack), 255);
+            osStartThread(&gCustomThread.thread);
+            currentlyPressedButtons = 0;
+            stateCooldown = 5; 
+        }
     }
 }
 
@@ -710,7 +708,11 @@ void DLWriteHook(void) {
 
     // gSPVertex(gMainGfxPosPtr++, vertexData, 3, 0);
     // gSP1Triangle(gMainGfxPosPtr++, 0, 1, 2, 0);
-    gSPDisplayList(gMainGfxPosPtr++, displayList);
+    // gDPPipeSync(gMainGfxPosPtr++);
+
+    // gSPVertex(gMainGfxPosPtr++, vertexData, 3, 0);
+    // gSP1Triangle(gMainGfxPosPtr++, 0, 1, 2, 0);
+    //gSPDisplayList(gMainGfxPosPtr++, displayList);
 
     // func_8002616C(); //restore from hook
 }
