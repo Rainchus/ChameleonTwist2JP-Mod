@@ -9,9 +9,15 @@
 
 //80035C68 chaos idea, delete function call here
 
+s32 p1AirborneFrames = 0;
 s32 holdDpadDirectionFrames = 0;
 s32 prevOption = 0;
 s32 infiniteHealthBool = 0;
+s32 pulledParasolTimer = 0;
+s32 parasolPullFrame = 0;
+f32 parasolPullSpeed = 0.0f;
+s32 parasolPulled = 0;
+f32 parasolPullAngle = 0.0f;
 
 extern Gfx* gMainGfxPosPtr;
 
@@ -37,12 +43,61 @@ s32 boolPrintCustomText = 1;
 volatile s32 isSaveOrLoadActive = 0;
 s32 saveOrLoadStateMode = 0;
 
+typedef struct RGBA {
+    u8 r;
+    u8 g;
+    u8 b;
+    u8 a;
+} RGBA;
+
+typedef struct TextColor {
+    RGBA zero;
+    RGBA one;
+    RGBA two;
+    RGBA three;
+} TextColor;
+
+TextColor RedOrange = {
+    {255, 255, 0, 255},
+    {255, 0, 0, 255},
+    {255, 0, 0, 255},
+    {255, 255, 0, 255},
+};
+
+TextColor Cyan = {
+    {0x2A, 0xEE, 0xE9, 0xFF},
+    {0x00, 0xC0, 0xDA, 0xFF},
+    {0x2A, 0xEE, 0xE9, 0xFF},
+    {0x00, 0xC0, 0xDA, 0xFF},
+};
+
+TextColor Purple = {
+    {0xFF, 0x40, 0xFF, 0xFF},
+    {0x00, 0x40, 0xFF, 0xFF},
+    {0xFF, 0x40, 0xFF, 0xFF},
+    {0xFF, 0x40, 0xFF, 0xFF}    
+};
+
+TextColor White = {
+    {0xFF, 0xFF, 0xFF, 0xFF},
+    {0xFF, 0xFF, 0xFF, 0xFF},
+    {0xFF, 0xFF, 0xFF, 0xFF},
+    {0xFF, 0xFF, 0xFF, 0xFF}    
+};
+
+TextColor Green = {
+    {0x00, 0xFF, 0x00, 0xFF},
+    {0x00, 0xFF, 0x00, 0xFF},
+    {0x00, 0xFF, 0x00, 0xFF},
+    {0x00, 0xFF, 0x00, 0xFF}    
+};
+
 #define RANDOM 0
 #define SPEED 1
 #define X3 2
 
 extern f32 powerUpFloatArray[8];
-
+void setTextGradient(s32, s32, s32, s32, s32);
 extern u16 currentlyPressedButtons;
 extern u16 currentlyHeldButtons;
 #define SAVE_MODE 0
@@ -52,8 +107,6 @@ extern u16 currentlyHeldButtons;
 #define ramEndAddr 0x80400000 //can probably skip the frame buffer at around 0x80360000 - 0x80400000 approximately
 
 extern CustomThread gCustomThread;
-
-void SetTextColor(u8 red, u8 blue, u8 green, u8 alpha);
 void RemoveTextColor(void);
 
 void SetTextWidthAndHeight(f32 width, f32 height) {
@@ -331,7 +384,7 @@ void printCallsUntilDecidedPowerup(void) {
     textStyle = 1;
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
     SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(255, 255, 255, 255);
+    SetTextColor(&RedOrange);
     _sprintf(buffer, "%d", callsAtPowerupDecision);
     printDebugText(buffer);
 }
@@ -344,10 +397,35 @@ void printCurrentSpeed(void) {
     textStyle = 1;
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
     SetTextWidthAndHeight(0.6f, 0.6f);
-    RemoveTextColor();
-    _sprintf(buffer, "%2.2f", gPlayerActor->speed);
+    SetTextColor(&RedOrange);
+    _sprintf(buffer, "%2.2f", gPlayerActors[0].magnitude);
     printDebugText(buffer);
 }
+
+void SetTextColor(TextColor* color) {
+    setTextGradient(0, color->zero.r, color->zero.g, color->zero.b, color->zero.a); //args: unk, r, g, b, a
+    setTextGradient(1, color->one.r, color->one.g, color->one.b, color->one.a); //args: unk, r, g, b, a
+    setTextGradient(2, color->two.r, color->two.g, color->two.b, color->two.a); //args: unk, r, g, b, a
+    setTextGradient(3, color->three.r, color->three.g, color->three.b, color->three.a); //args: unk, r, g, b, a
+    ifTextColor = 1;
+}
+
+void SetTextColor2(u8 red, u8 blue, u8 green, u8 alpha) {
+    textRed = red;
+    textBlue = blue;
+    textGreen = green;
+    textOpacity = alpha;
+    ifTextColor = 1;
+}
+
+
+// s32 textCyanColor[] = {
+//     0x2A, 0xEE, 0xE9, 0xFF, // top
+//     0x00, 0xC0, 0xDA, 0xFF, // bottom
+//     0x2A, 0xEE, 0xE9, 0xFF, // top
+//     0x00, 0xC0, 0xDA, 0xFF  // bottom
+// };
+
 
 void printCurrentRespawnZone(void) {
     u8 buffer[40];
@@ -355,20 +433,19 @@ void printCurrentRespawnZone(void) {
 
     _bzero(buffer, sizeof(buffer));
     textStyle = 1;
+    textKerning = 1;
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
     SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(255, 255, 255, 255);
+    SetTextColor(&RedOrange);
+    // setTextGradient(0, TextRGBA0.r, TextRGBA0.g, TextRGBA0.b, TextRGBA0.a); //args: unk, r, g, b, a
+    // setTextGradient(1, TextRGBA1.r, TextRGBA1.g, TextRGBA1.b, TextRGBA1.a); //args: unk, r, g, b, a
+    // setTextGradient(2, TextRGBA2.r, TextRGBA2.g, TextRGBA2.b, TextRGBA2.a); //args: unk, r, g, b, a
+    // setTextGradient(3, TextRGBA3.r, TextRGBA3.g, TextRGBA3.b, TextRGBA3.a); //args: unk, r, g, b, a
     _sprintf(buffer, "Zone: %02d", respawnZone);
     printDebugText(buffer);
 }
 
-void SetTextColor(u8 red, u8 blue, u8 green, u8 alpha) {
-    textRed = red;
-    textBlue = blue;
-    textGreen = green;
-    textOpacity = alpha;
-    ifTextColor = 1;
-}
+
 
 void RemoveTextColor(void) {
     ifTextColor = 0;
@@ -401,7 +478,7 @@ void DisplayDebugMenu(void) {
     _bzero(buffer, sizeof(buffer));
     setDebugTextPosition(MenuTextPositions[0].xPos, MenuTextPositions[0].yPos - 15, 0x50);
     SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(255, 255, 255, 255);
+    SetTextColor2(255, 255, 255, 255);
 
     _sprintf(buffer, "Inf Hp: %s", OffOrOnString[infiniteHealthBool]);
     printDebugText(buffer);
@@ -467,7 +544,7 @@ void DisplayDebugMenu(void) {
     _bzero(buffer, sizeof(buffer));
     setDebugTextPosition(MenuTextPositions[0].xPos + 105, MenuTextPositions[0].yPos, 0x32);
     SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(255, 255, 255, 255);
+    SetTextColor2(255, 255, 255, 255);
 
     _sprintf(buffer, "%s", StageList[MenuInstancePointer->stageIndex - 1]);
     printDebugText(buffer);
@@ -478,10 +555,10 @@ void DisplayDebugMenu(void) {
         _bzero(buffer, sizeof(buffer));
         setDebugTextPosition(MenuTextPositions[i].xPos, MenuTextPositions[i].yPos, 0x32);
         SetTextWidthAndHeight(0.6f, 0.6f);
-        SetTextColor(255, 255, 255, 255);
+        SetTextColor2(255, 255, 255, 255);
     
         if (MenuInstancePointer->cursor == i) {
-            SetTextColor(255, 255, 0, 255);
+            SetTextColor2(255, 255, 0, 255);
         }
         
         if (i == 0) {
@@ -507,7 +584,7 @@ void printCurrentSeed(void) {
     textKerning = 1;
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
     SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(255, 255, 255, 255);
+    SetTextColor(&White);
     _sprintf(buffer, "Seed: 0x%08X", rngSeed);
     printDebugText(buffer);
 }
@@ -521,7 +598,7 @@ void printCallsEnteringSkyland(void) {
     textKerning = 1;
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
     SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(255, 255, 255, 255);
+    SetTextColor(&White);
     _sprintf(buffer, "SLCalls: %d", callsEnteringSkyland);
     printDebugText(buffer);
 }
@@ -535,7 +612,7 @@ void printCallsAfterChosenPowerup(void) {
     textKerning = 1;
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
     SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(255, 255, 255, 255);
+    SetTextColor(&White);
     _sprintf(buffer, "Calls: %d", calls);
     printDebugText(buffer);
 }
@@ -549,7 +626,7 @@ void printVoidOutCalls(void) {
     textKerning = 1;
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
     SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(255, 255, 255, 255);
+    SetTextColor(&White);
     _sprintf(buffer, "Void: %d", voidOutCalls);
     printDebugText(buffer);
 }
@@ -560,7 +637,7 @@ void printCurrentPowerupLock(void) {
     textStyle = 1;
     textKerning = 1;
     SetTextWidthAndHeight(0.6f, 0.6f);
-    RemoveTextColor();
+    SetTextColor(&RedOrange);
     setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
     switch(curPowerupLock) {
         case RANDOM:
@@ -575,6 +652,36 @@ void printCurrentPowerupLock(void) {
     }
 }
 
+void printParasolPulledFrame(void) {
+    TextPosition textPos = {20, 184};
+    char buffer[32];
+
+    if (pulledParasolTimer == 0) {
+        return;
+    }
+
+    pulledParasolTimer--;
+
+    _bzero(buffer, sizeof(buffer));
+
+    textStyle = 1;
+    textKerning = 1;
+    SetTextWidthAndHeight(0.6f, 0.6f);
+    SetTextColor(&Green);
+    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    _sprintf(buffer, "Frame %d", parasolPullFrame);
+    printDebugText(buffer);
+
+
+    _bzero(buffer, sizeof(buffer));
+    setDebugTextPosition(textPos.xPos, textPos.yPos - 12, 0x32);
+    SetTextWidthAndHeight(0.6f, 0.6f);
+    SetTextColor(&Purple);
+    // _sprintf(buffer, "Ang: %2.2f, Spd: %2.2f", parasolPullAngle, parasolPullSpeed);
+    _sprintf(buffer, "Ang: %2.2f", parasolPullAngle);
+    printDebugText(buffer);
+}
+
 void printCustomTextInC(void) {
     if (boolPrintCustomText == 0) {
         return;
@@ -585,6 +692,7 @@ void printCustomTextInC(void) {
 
     //otherwise, print stuff
     //printCallsUntilDecidedPowerup();
+    printParasolPulledFrame();
     printCurrentPowerupLock();
     printCurrentSpeed();
     //printCurrentSeed();
@@ -717,11 +825,36 @@ void DLWriteHook(void) {
     // func_8002616C(); //restore from hook
 }
 
+void tickAirborneFrames(void) {
+    if (p1Airborne == 1) {
+        p1AirborneFrames++;
+    } else {
+        p1AirborneFrames = 0;
+    }
+}
+
+void ifPullParasolPrint(void) {
+    if (p1IfParasol == 1) {
+        if (parasolPulled == 0) {
+            pulledParasolTimer = 90;
+            parasolPullFrame = p1AirborneFrames;
+            //parasolPullSpeed = gPlayerActors[0].magnitude;
+            parasolPullAngle = gPlayerActors[0].angle1;
+            parasolPulled = 1;
+        }
+    } else {
+        parasolPulled = 0;
+    }
+}
+
 void perFrameCFunction(void) {
     //gSP1Triangle(Gfx *gdl, s32 v0, s32 v1, s32 v2, s32 flag)
     
     debugFlag = 1;
     D_80160648 = 0x3F; //unlock all levels
+
+    tickAirborneFrames();
+    ifPullParasolPrint();
 
     if (infiniteHealthBool == 1) {
         playerHealth = 10;

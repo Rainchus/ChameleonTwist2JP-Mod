@@ -70,7 +70,8 @@
 .definelabel func_80050428, 0x80050428
 .definelabel func_800507c8, 0x800507c8
 .definelabel powerUpFloatArray, 0x800ECF64
-.definelabel gPlayerActor, 0x80187290
+//.definelabel gPlayerActor, 0x80187290
+.definelabel gPlayerActors, 0x80187B00
 
 .definelabel osMemSize, 0x80000318
 .definelabel __osCurrentTime, 0x801CCA84
@@ -120,3 +121,5 @@
 .definelabel textHeight, 0x801857B8
 .definelabel gMainGfxPosPtr, 0x80101440
 .definelabel func_8002616C, 0x8002616C
+.definelabel p1Airborne, 0x80187B38
+.definelabel p1IfParasol, 0x80187B54
