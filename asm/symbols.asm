@@ -125,7 +125,13 @@
 .definelabel p1IfParasol, 0x80187B54
 .definelabel gZones, 0x801857F0
 .definelabel camera, 0x80163030
-
+.definelabel guTranslate, 0x800E5AA8
+.definelabel MatrixBuffer, 0x801604E8
+.definelabel imageStuff, 0x80187C10
+.definelabel D_800F57BC, 0x800F57BC
+.definelabel guPerspective, 0x800DCF10
+.definelabel guLookAt, 0x800DDB78
+.definelabel guMtxCatL, 0x800E0520
 
 //mainThread 8001C81C
 
@@ -218,6 +224,6 @@ NOP
 //JAL DLWriteHookAsm6
 //NOP
 
-.org 0x80035F54
-J DLWriteHookAsm7
-ADDIU sp, sp, 0x58
+//.org 0x80035F54
+//J DLWriteHookAsm7
+//ADDIU sp, sp, 0x58

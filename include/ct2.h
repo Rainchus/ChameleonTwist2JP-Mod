@@ -170,6 +170,14 @@ typedef struct ZoneData {
 /* 0x2C */ s32 respawnZ;
 } ZoneData;
 
+typedef struct testingstuff {
+    char unk_00[0x6C];
+    f32 unk_6C;
+    f32 unk_70;
+} testingstuff;
+
+extern testingstuff imageStuff;
+
 extern ZoneData gZones[64]; //unsure of max
 
 

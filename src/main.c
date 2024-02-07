@@ -34,6 +34,16 @@ typedef struct MenuInstance {
 
 MenuInstance* MenuInstancePointer = 0;
 
+typedef struct unkLookatStruct {
+    char unk_00[0x48];
+    f32 unk48;
+    f32 unk4C;
+    f32 unk50;
+    f32 unk54;
+    f32 unk58;
+    f32 unk5C;
+} unkLookatStruct;
+
 extern s16 unkStep;
 extern s16 debugFlag;
 extern s16 textStyle;
@@ -724,7 +734,7 @@ void hookAt800DE480(void);
 void hookAt800D4240(void);
 void osPiStartDmaHook(void);
 void osEPiStartDmaHook(void);
-
+void func_80035E00_Hook(unkLookatStruct* arg0);
 void cBootFunction(void) { //ran once on boot
     crash_screen_init();
     stateCooldown = 0;
@@ -735,6 +745,8 @@ void cBootFunction(void) { //ran once on boot
     hookCode((void*)0x8004FBD0, &copyCallsToPowerupCalls); //when powerup is grabbed, copy calls to another var
     hookCode((void*)0x800B3EA8, &printCustomText); //print our custom text when in game
     hookCode((void*)0x8004E3DC, &recordCallsAtVoidOut);
+
+    hookCode((void*)0x80035E00, &func_80035E00_Hook);
 
     //time to randomly guess at fixing savestates wheeeeee
     //hookCode((void*)0x800DE480, &hookAt800DE480);//(adds stability?)
@@ -804,10 +816,31 @@ Vtx vertexData[] = {
 //     gsSPEndDisplayList()
 // };
 
+Mtx modelview = {0};
+
+extern Mtx* MatrixBuffer;
+
+typedef f32 Matrix4f[4][4]; // size = 0x40
+
+void thing(void) {
+    // Translation values (adjust these as needed)
+    float translateX = -5000.0f;
+    float translateY = 5000.0f;
+    float translateZ = 26700.0f;
+
+    // Create a translation matrix
+    Mtx translationMatrix;
+    guTranslate(&translationMatrix, translateX, translateY, translateZ);
+
+    // Apply the translation to the modelview matrix
+    guMtxCatL(MatrixBuffer, &translationMatrix, MatrixBuffer);
+
+    // Render the 3D object
+    gSPDisplayList(gMainGfxPosPtr++, Entity_YellowBlock_Render);
+}
+
 void DLWriteHook(void) {
     gSPDisplayList(gMainGfxPosPtr++, Entity_YellowBlock_Render);
-
-    // func_8002616C(); //restore from hook
 }
 
 void tickAirborneFrames(void) {
@@ -895,4 +928,26 @@ void perFrameCFunction(void) {
     }
 
     while (isSaveOrLoadActive != 0) {}
+}
+
+extern f32 D_800F57BC;
+extern Gfx* gMainGfxPosPtr;
+extern Mtx* MatrixBuffer;
+
+void func_80035E00_Hook(unkLookatStruct* arg0) { //renders the world
+    u16 sp56;
+    f32 var_f0;
+
+    var_f0 = 50.0f;
+    if ((unkStep == 0xF) || (unkStep == 0x10)) {
+        var_f0 = 40.0f;
+    }
+    guPerspective(MatrixBuffer, &sp56, 60.0f, 1.3333334f, var_f0, D_800F57BC, 1.0f);
+    gSPPerspNormalize(gMainGfxPosPtr++, sp56);
+    gSPMatrix(gMainGfxPosPtr++, MatrixBuffer++, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_PROJECTION);
+    guLookAt(MatrixBuffer, arg0->unk48, arg0->unk4C, arg0->unk50, arg0->unk54, arg0->unk58, arg0->unk5C, 0.0f, 1.0f, 0.0f);
+    gSPMatrix(gMainGfxPosPtr++, MatrixBuffer++, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+
+    //added code
+    gSPDisplayList(gMainGfxPosPtr++, Entity_YellowBlock_Render);
 }
