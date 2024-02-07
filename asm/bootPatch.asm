@@ -121,6 +121,10 @@ LUI t6, 0x800F
 J 0x800261D0
 LW t6, 0xAD60 (t6)
 
+DLWriteHookAsm7:
+J DLWriteHook
+NOP
+
 
 
 __osDpDeviceBusy:

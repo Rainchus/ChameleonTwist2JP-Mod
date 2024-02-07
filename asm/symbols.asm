@@ -124,6 +124,7 @@
 .definelabel p1Airborne, 0x80187B38
 .definelabel p1IfParasol, 0x80187B54
 .definelabel gZones, 0x801857F0
+.definelabel camera, 0x80163030
 
 
 //mainThread 8001C81C
@@ -213,6 +214,10 @@ NOP
 //J DLWriteHookAsm5
 //NOP
 
-.org 0x800261C8
-JAL DLWriteHookAsm6
-NOP
+//.org 0x800261C8
+//JAL DLWriteHookAsm6
+//NOP
+
+.org 0x80035F54
+J DLWriteHookAsm7
+ADDIU sp, sp, 0x58
