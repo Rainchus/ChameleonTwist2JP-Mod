@@ -702,20 +702,11 @@ void printCustomTextInC(void) {
     printCurrentRespawnZone();
 }
 
-void hookAt80026750(void);
-void hookAt800D5B64(void);
 void hookAt800DE480(void);
-void hookAt800E7F98(void);
-void hookAt800D58E8(void);
-void hookAt800D5CE8(void);
-void hookAt800D6C04(void);
 void hookAt800D4240(void);
-void hookAt800D3FBC(void);
-void hookAt800CBDC0(void);
-void hookAt8002AB64(void);
-void hookAt800D6C10(void);
 void osPiStartDmaHook(void);
 void osEPiStartDmaHook(void);
+
 void cBootFunction(void) { //ran once on boot
     crash_screen_init();
     stateCooldown = 0;
@@ -728,20 +719,8 @@ void cBootFunction(void) { //ran once on boot
     hookCode((void*)0x8004E3DC, &recordCallsAtVoidOut);
 
     //time to randomly guess at fixing savestates wheeeeee
-    //hookCode((void*)0x80026750, &hookAt80026750);//
-    //hookCode((void*)0x800D5B64, &hookAt800D5B64);//
     //hookCode((void*)0x800DE480, &hookAt800DE480);//(adds stability?)
-    //hookCode((void*)0x800E7F98, &hookAt800E7F98);//
-    //hookCode((void*)0x800D58E8, &hookAt800D58E8);//
-    //hookCode((void*)0x800D5CE8, &hookAt800D5CE8);//
-    //hookCode((void*)0x800D6C04, &hookAt800D6C04);//
     hookCode((void*)0x800D4240, &hookAt800D4240); //(probably keep this one on, increases stability?)
-    //hookCode((void*)0x800D3FBC, &hookAt800D3FBC); //(bad hook)
-    //hookCode((void*)0x800CBDC0, &hookAt800CBDC0);//
-    //hookCode((void*)0x8002AB64, &hookAt8002AB64);
-
-    //more attempts, fun stuff
-    //hookCode((void*)0x800D6C10, &hookAt800D6C10);
 
     hookCode((void*)0x800DF584, &osPiStartDmaHook);
     hookCode((void*)0x800E1590, &osEPiStartDmaHook);

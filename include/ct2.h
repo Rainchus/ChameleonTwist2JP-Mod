@@ -80,8 +80,8 @@ extern int getStatusRegister(void); //returns status reg
 extern int setStatusRegister(s32); //returns status reg
 
 extern void test_lz4(const u8* srcData, int srcSize);
-extern void* my_memcpy(void* dst, const void* src, s32 n);
-extern void* my_memmove(void* dest, const void* src, s32 n);
+//extern void* my_memcpy(void* dst, const void* src, s32 n);
+//extern void* my_memmove(void* dest, const void* src, s32 n);
 
 extern f32 textWidth;
 extern f32 textHeight;

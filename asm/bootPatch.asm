@@ -1,97 +1,3 @@
-//mainThread 8001C81C
-
-.headersize 0x80024C00
-.org 0x800266B0
-bootHook:
-
-LI a0, 0x7C1400
-LUI a1, 0x8040
-LUI a2, 0x0002
-JAL dma_copy
-ORI a2, a2, 0x0000
-J copiedHookCode
-NOP
-
-dma_copy:
-ADDIU sp, sp, -0x80
-SW ra, 0x007C (sp)
-SW s0, 0x0078 (sp)
-SW s1, 0x0074 (sp)
-SW s2, 0x0070 (sp)
-
-ADDU s0, a0, r0
-ADDU s1, a1, r0
-ADDU s2, a2, r0
-
-ADDIU a0, sp, 0x38
-ADDIU a1, sp, 0x34
-JAL osCreateMesgQueue
-ADDIU a2, r0, 1
-
-ADDU a0, s0, r0
-JAL osInvalDCache
-ADDU a1, s2, r0
-
-ADDU a0, s0, r0
-JAL osInvalICache
-ADDU a1, s2, r0
-
-ADDIU a0, sp, 0x50
-ADDIU a1, r0, 0
-ADDIU a2, r0, 0
-ADDIU a3, sp, 0x38
-SW a3, 0x0018 (sp)
-ADDU a3, s0, r0 //romAddr
-SW s1, 0x0010 (sp) //ramAddr
-JAL osPiStartDma
-SW s2, 0x0014 (sp) //dmaSize
-
-ADDIU a0, sp, 0x38
-ADDU a1, r0, r0
-JAL osRecvMesg
-ADDIU a2, r0, 1
-
-LW ra, 0x007C (sp)
-LW s0, 0x0078 (sp)
-LW s1, 0x0074 (sp)
-LW s2, 0x0070 (sp)
-JR RA
-ADDIU sp, sp, 0x80
-
-.org 0x8002691C
-J moreReplacedCode
-
-.org 0x80029610
-J perFrameASM
-NOP
-
-//.org 0x800267A0
-//J DLWriteHookAsm
-//NOP
-
-//.org 0x80031540
-//J DLWriteHookAsm2
-//ADDIU sp, sp, 0xB0
-
-//.org 0x80030D68
-//J DLWriteHookAsm3
-//NOP
-
-//.org 0x800260E0
-//J DLWriteHookAsm4
-//NOP
-
-//.org 0x800269F8
-//J DLWriteHookAsm5
-//NOP
-
-.org 0x800261C8
-JAL DLWriteHookAsm6
-NOP
-
-//7C1400
-.headersize 0x7FC3EC00
-.org 0x80400000
 copiedHookCode:
 JAL cBootFunction
 NOP
@@ -338,9 +244,9 @@ LUI a3, 0x8010
 J 0x802032DC
 ADDIU a3, a3, 0xF1C0
 
-.importobj "obj/crash.o"
-.importobj "obj/main.o"
-.importobj "obj/lib.o"
-.importobj "obj/lz4.o"
+//.importobj "obj/crash.o"
+//.importobj "obj/main.o"
+//.importobj "obj/lib.o"
+//.importobj "obj/lz4.o"
 
 END:
