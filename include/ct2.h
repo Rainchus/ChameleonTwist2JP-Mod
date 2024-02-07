@@ -68,7 +68,8 @@ typedef struct PlayerActor {
     /* 0x0C */ f32 angle1;
     /* 0x10 */ char unk_10[8];
     /* 0x18 */ f32 magnitude; //speedNoDirection
-    /* 0x1C */ char unk_1C[8];
+    /* 0x1C */ f32 unk_1C;
+    /* 0x20 */ char unk_20[4];
     /* 0x24 */ f32 velocity; //speedWithDirection
 } PlayerActor; //unknown size
 

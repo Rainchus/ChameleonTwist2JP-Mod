@@ -33,6 +33,7 @@ MenuInstance* MenuInstancePointer = 0;
 
 extern s16 unkStep;
 extern s16 debugFlag;
+extern s16 textStyle;
 
 s32 stateCooldown = 0; //does this work??
 s32 savestateCurrentSlot = 0;
@@ -109,9 +110,25 @@ extern u16 currentlyHeldButtons;
 extern CustomThread gCustomThread;
 void RemoveTextColor(void);
 
+void SetTextColor(TextColor* color) {
+    setTextGradient(0, color->zero.r, color->zero.g, color->zero.b, color->zero.a); //args: unk, r, g, b, a
+    setTextGradient(1, color->one.r, color->one.g, color->one.b, color->one.a); //args: unk, r, g, b, a
+    setTextGradient(2, color->two.r, color->two.g, color->two.b, color->two.a); //args: unk, r, g, b, a
+    setTextGradient(3, color->three.r, color->three.g, color->three.b, color->three.a); //args: unk, r, g, b, a
+    ifTextColor = 1;
+}
+
 void SetTextWidthAndHeight(f32 width, f32 height) {
     textWidth = width;
     textHeight = height;
+}
+
+void SetDefaultTextParametersWithColor(TextColor* color, s32 x, s32 y) {
+    textStyle = 1;
+    textKerning = 1;
+    setDebugTextPosition(x, y, 0x32);
+    SetTextWidthAndHeight(0.6f, 0.6f);
+    SetTextColor(color);
 }
 
 void hookCode(s32* patchAddr, void* jumpLocation) {
@@ -244,7 +261,6 @@ void* crash_screen_copy_to_buf(void* dest, const char* src, u32 size);
 void setDebugTextPosition(s32 xPos, s32 yPos, s32 unk);
 void formatText(void* buffer, void* string);
 void printDebugText(void* string);
-extern s16 textStyle;
 extern u32 rngSeed;
 void recordCallsAtVoidOut(void);
 s32 curPowerupLock = 0;
@@ -381,10 +397,7 @@ void printCallsUntilDecidedPowerup(void) {
     TextPosition textPos = {61, 196};
 
     _bzero(buffer, sizeof(buffer));
-    textStyle = 1;
-    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
-    SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(&RedOrange);
+    SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
     _sprintf(buffer, "%d", callsAtPowerupDecision);
     printDebugText(buffer);
 }
@@ -394,20 +407,10 @@ void printCurrentSpeed(void) {
     TextPosition textPos = {20, 210};
 
     _bzero(buffer, sizeof(buffer));
-    textStyle = 1;
-    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
-    SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(&RedOrange);
+    SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
+
     _sprintf(buffer, "%2.2f", gPlayerActors[0].magnitude);
     printDebugText(buffer);
-}
-
-void SetTextColor(TextColor* color) {
-    setTextGradient(0, color->zero.r, color->zero.g, color->zero.b, color->zero.a); //args: unk, r, g, b, a
-    setTextGradient(1, color->one.r, color->one.g, color->one.b, color->one.a); //args: unk, r, g, b, a
-    setTextGradient(2, color->two.r, color->two.g, color->two.b, color->two.a); //args: unk, r, g, b, a
-    setTextGradient(3, color->three.r, color->three.g, color->three.b, color->three.a); //args: unk, r, g, b, a
-    ifTextColor = 1;
 }
 
 void SetTextColor2(u8 red, u8 blue, u8 green, u8 alpha) {
@@ -432,15 +435,7 @@ void printCurrentRespawnZone(void) {
     TextPosition textPos = {20, 196};
 
     _bzero(buffer, sizeof(buffer));
-    textStyle = 1;
-    textKerning = 1;
-    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
-    SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(&RedOrange);
-    // setTextGradient(0, TextRGBA0.r, TextRGBA0.g, TextRGBA0.b, TextRGBA0.a); //args: unk, r, g, b, a
-    // setTextGradient(1, TextRGBA1.r, TextRGBA1.g, TextRGBA1.b, TextRGBA1.a); //args: unk, r, g, b, a
-    // setTextGradient(2, TextRGBA2.r, TextRGBA2.g, TextRGBA2.b, TextRGBA2.a); //args: unk, r, g, b, a
-    // setTextGradient(3, TextRGBA3.r, TextRGBA3.g, TextRGBA3.b, TextRGBA3.a); //args: unk, r, g, b, a
+    SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
     _sprintf(buffer, "Zone: %02d", respawnZone);
     printDebugText(buffer);
 }
@@ -580,11 +575,7 @@ void printCurrentSeed(void) {
     TextPosition textPos = {160, 210};
 
     _bzero(buffer, sizeof(buffer));
-    textStyle = 1;
-    textKerning = 1;
-    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
-    SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(&White);
+    SetDefaultTextParametersWithColor(&White, textPos.xPos, textPos.yPos);
     _sprintf(buffer, "Seed: 0x%08X", rngSeed);
     printDebugText(buffer);
 }
@@ -594,11 +585,7 @@ void printCallsEnteringSkyland(void) {
     TextPosition textPos = {152, 182};
 
     _bzero(buffer, sizeof(buffer));
-    textStyle = 1;
-    textKerning = 1;
-    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
-    SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(&White);
+    SetDefaultTextParametersWithColor(&White, textPos.xPos, textPos.yPos);
     _sprintf(buffer, "SLCalls: %d", callsEnteringSkyland);
     printDebugText(buffer);
 }
@@ -608,11 +595,7 @@ void printCallsAfterChosenPowerup(void) {
     TextPosition textPos = {155, 196};
 
     _bzero(buffer, sizeof(buffer));
-    textStyle = 1;
-    textKerning = 1;
-    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
-    SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(&White);
+    SetDefaultTextParametersWithColor(&White, textPos.xPos, textPos.yPos);
     _sprintf(buffer, "Calls: %d", calls);
     printDebugText(buffer);
 }
@@ -622,11 +605,7 @@ void printVoidOutCalls(void) {
     TextPosition textPos = {160, 210};
 
     _bzero(buffer, sizeof(buffer));
-    textStyle = 1;
-    textKerning = 1;
-    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
-    SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(&White);
+    SetDefaultTextParametersWithColor(&White, textPos.xPos, textPos.yPos);
     _sprintf(buffer, "Void: %d", voidOutCalls);
     printDebugText(buffer);
 }
@@ -634,11 +613,8 @@ void printVoidOutCalls(void) {
 void printCurrentPowerupLock(void) {
     TextPosition textPos = {61, 210};
 
-    textStyle = 1;
-    textKerning = 1;
-    SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(&RedOrange);
-    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
+
     switch(curPowerupLock) {
         case RANDOM:
             printDebugText("Normal");
@@ -663,22 +639,18 @@ void printParasolPulledFrame(void) {
     pulledParasolTimer--;
 
     _bzero(buffer, sizeof(buffer));
-
-    textStyle = 1;
-    textKerning = 1;
-    SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(&Green);
-    setDebugTextPosition(textPos.xPos, textPos.yPos, 0x32);
+    SetDefaultTextParametersWithColor(&Green, textPos.xPos, textPos.yPos);
     _sprintf(buffer, "Frame %d", parasolPullFrame);
     printDebugText(buffer);
 
-
     _bzero(buffer, sizeof(buffer));
-    setDebugTextPosition(textPos.xPos, textPos.yPos - 12, 0x32);
-    SetTextWidthAndHeight(0.6f, 0.6f);
-    SetTextColor(&Purple);
-    // _sprintf(buffer, "Ang: %2.2f, Spd: %2.2f", parasolPullAngle, parasolPullSpeed);
-    _sprintf(buffer, "Ang: %2.2f", parasolPullAngle);
+    SetDefaultTextParametersWithColor(&Purple, textPos.xPos, textPos.yPos - 12);
+
+    if (parasolPullSpeed == 0.0f) {
+        _sprintf(buffer, "Ang: %2.2f", parasolPullAngle);
+    } else {
+        _sprintf(buffer, "Ang: %2.2f, Spd: %2.2f", parasolPullAngle, parasolPullSpeed);
+    }
     printDebugText(buffer);
 }
 
@@ -781,24 +753,6 @@ Gfx displayList[] = {
 };
 
 void DLWriteHook(void) {
-    // gDPSetTextureImage(gMainGfxPosPtr++, G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, image);
-    // gDPSetTile(gMainGfxPosPtr++, G_IM_FMT_RGBA, G_IM_SIZ_16b, 8, 0, G_TX_LOADTILE, 0,
-    //             G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOLOD,
-    //             G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOLOD);
-    // gDPLoadSync(gMainGfxPosPtr++);
-    // gDPLoadTile(gMainGfxPosPtr++, G_TX_LOADTILE, 0, 0, 31, 31);
-    // gDPPipeSync(gMainGfxPosPtr++);
-    // gDPSetTile(gMainGfxPosPtr++, G_IM_FMT_RGBA, G_IM_SIZ_16b, 8, 0, G_TX_RENDERTILE, 0,
-    //             G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOLOD,
-    //             G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOLOD);
-    // gDPSetTileSize(gMainGfxPosPtr++, G_TX_RENDERTILE, 0, 0, 31, 31);
-
-    // gSPVertex(gMainGfxPosPtr++, vertexData, 3, 0);
-    // gSP1Triangle(gMainGfxPosPtr++, 0, 1, 2, 0);
-    // gDPPipeSync(gMainGfxPosPtr++);
-
-    // gSPVertex(gMainGfxPosPtr++, vertexData, 3, 0);
-    // gSP1Triangle(gMainGfxPosPtr++, 0, 1, 2, 0);
     //gSPDisplayList(gMainGfxPosPtr++, displayList);
 
     // func_8002616C(); //restore from hook
@@ -817,12 +771,16 @@ void ifPullParasolPrint(void) {
         if (parasolPulled == 0) {
             pulledParasolTimer = 90;
             parasolPullFrame = p1AirborneFrames;
-            //parasolPullSpeed = gPlayerActors[0].magnitude;
             parasolPullAngle = gPlayerActors[0].angle1;
             parasolPulled = 1;
         }
+
+        if (gPlayerActors[0].magnitude != 0.0f && parasolPullSpeed == 0.0f) {
+            parasolPullSpeed = gPlayerActors[0].magnitude;
+        }
     } else {
         parasolPulled = 0;
+        parasolPullSpeed = 0.0f;
     }
 }
 
