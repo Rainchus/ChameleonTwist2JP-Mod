@@ -14,7 +14,7 @@ typedef struct {
     /* 0x9D2 */ u16 height;
 } CrashScreen; // size = 0x9D4
 
-extern CrashScreen gCrashScreen; // bss, externed for now until issues are figured out
+CrashScreen gCrashScreen = {0}; //force into .data section so it's zeroed on boot
 
 void osSetTime(u64 time) {
     __osCurrentTime = time;

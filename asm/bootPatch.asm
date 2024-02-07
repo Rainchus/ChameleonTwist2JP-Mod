@@ -1,73 +1,3 @@
-//mainThread 8001C81C
-
-.headersize 0x80024C00
-.org 0x800266B0
-bootHook:
-
-LI a0, 0x7C1400
-LUI a1, 0x8040
-LUI a2, 0x0002
-JAL dma_copy
-ORI a2, a2, 0x0000
-J copiedHookCode
-NOP
-
-dma_copy:
-ADDIU sp, sp, -0x80
-SW ra, 0x007C (sp)
-SW s0, 0x0078 (sp)
-SW s1, 0x0074 (sp)
-SW s2, 0x0070 (sp)
-
-ADDU s0, a0, r0
-ADDU s1, a1, r0
-ADDU s2, a2, r0
-
-ADDIU a0, sp, 0x38
-ADDIU a1, sp, 0x34
-JAL osCreateMesgQueue
-ADDIU a2, r0, 1
-
-ADDU a0, s0, r0
-JAL osInvalDCache
-ADDU a1, s2, r0
-
-ADDU a0, s0, r0
-JAL osInvalICache
-ADDU a1, s2, r0
-
-ADDIU a0, sp, 0x50
-ADDIU a1, r0, 0
-ADDIU a2, r0, 0
-ADDIU a3, sp, 0x38
-SW a3, 0x0018 (sp)
-ADDU a3, s0, r0 //romAddr
-SW s1, 0x0010 (sp) //ramAddr
-JAL osPiStartDma
-SW s2, 0x0014 (sp) //dmaSize
-
-ADDIU a0, sp, 0x38
-ADDU a1, r0, r0
-JAL osRecvMesg
-ADDIU a2, r0, 1
-
-LW ra, 0x007C (sp)
-LW s0, 0x0078 (sp)
-LW s1, 0x0074 (sp)
-LW s2, 0x0070 (sp)
-JR RA
-ADDIU sp, sp, 0x80
-
-.org 0x8002691C
-J moreReplacedCode
-
-.org 0x80029610
-J perFrameASM
-NOP
-
-//7C1400
-.headersize 0x7FC3EC00
-.org 0x80400000
 copiedHookCode:
 JAL cBootFunction
 NOP
@@ -147,6 +77,51 @@ LHU t6, 0xAF60 (t6)
 
 //80400000
 //0x7C1400
+
+//DLWriteHookAsm:
+//JAL DLWriteHook
+//NOP
+//J 0x800267A8
+//NOP
+
+DLWriteHookAsm2:
+ADDIU sp, sp, -0x18
+SW ra, 0x0014 (sp)
+JAL DLWriteHook
+NOP
+LW ra, 0x0014 (sp)
+JR RA
+ADDIU sp, sp, 0x18
+
+DLWriteHookAsm3:
+JAL DLWriteHook
+NOP
+LW t4, 0x0050 (s0)
+J 0x80030D70
+LUI t8, 0xD9FF
+
+DLWriteHookAsm4:
+JAL DLWriteHook
+NOP
+JAL 0x800D4D70
+OR a0, r0, r0
+J 0x800260E8
+NOP
+
+DLWriteHookAsm5:
+JAL DLWriteHook
+SW a2, 0x0000 (v1)
+J 0x800261C0
+NOP
+
+DLWriteHookAsm6:
+JAL DLWriteHook
+NOP
+LUI t6, 0x800F
+J 0x800261D0
+LW t6, 0xAD60 (t6)
+
+
 
 __osDpDeviceBusy:
 LUI t6, 0xA410
@@ -269,9 +244,9 @@ LUI a3, 0x8010
 J 0x802032DC
 ADDIU a3, a3, 0xF1C0
 
-.importobj "obj/crash.o"
-.importobj "obj/main.o"
-.importobj "obj/lib.o"
-.importobj "obj/lz4.o"
+//.importobj "obj/crash.o"
+//.importobj "obj/main.o"
+//.importobj "obj/lib.o"
+//.importobj "obj/lz4.o"
 
 END:

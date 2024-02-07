@@ -54,23 +54,35 @@ typedef struct CustomThread {
     /* 0x9D2 */ u16 height;
 } CustomThread; // size = 0x9D4
 
-typedef struct PlayerActor {
-/* 0x000 */ char unk_00[0x870];
-/* 0x870 */ Vec3f pos;
-/* 0x87C */ f32 unk_87C;
-/* 0x880 */ f32 unk_880;
-/* 0x884 */ f32 unk_884;
-/* 0x888 */ f32 speed;
-} PlayerActor;
+// typedef struct PlayerActor {
+// /* 0x000 */ char unk_00[0x870];
+// /* 0x870 */ Vec3f pos;
+// /* 0x87C */ f32 unk_87C;
+// /* 0x880 */ f32 unk_880;
+// /* 0x884 */ f32 unk_884;
+// /* 0x888 */ f32 speed;
+// } PlayerActor;
 
-extern PlayerActor* gPlayerActor; //80187290
+typedef struct PlayerActor {
+    /* 0x00 */ Vec3f pos;
+    /* 0x0C */ f32 angle1;
+    /* 0x10 */ char unk_10[8];
+    /* 0x18 */ f32 magnitude; //speedNoDirection
+    /* 0x1C */ f32 unk_1C;
+    /* 0x20 */ char unk_20[4];
+    /* 0x24 */ f32 velocity; //speedWithDirection
+} PlayerActor; //unknown size
+
+//extern PlayerActor* gPlayerActor; //80187290
+
+extern PlayerActor gPlayerActors[4];
 
 extern int getStatusRegister(void); //returns status reg
 extern int setStatusRegister(s32); //returns status reg
 
 extern void test_lz4(const u8* srcData, int srcSize);
-extern void* my_memcpy(void* dst, const void* src, s32 n);
-extern void* my_memmove(void* dest, const void* src, s32 n);
+//extern void* my_memcpy(void* dst, const void* src, s32 n);
+//extern void* my_memmove(void* dest, const void* src, s32 n);
 
 extern f32 textWidth;
 extern f32 textHeight;
@@ -82,6 +94,8 @@ extern s16 textOpacity;
 extern s16 ifTextColor;
 extern s16 textKerning;
 
+extern s32 p1Airborne;
+extern s16 p1IfParasol;
 
 void decompress_lz4_ct_default(int srcSize, int savestateCompressedSize, u8* compressedBuffer);
 s32 compress_lz4_ct_default(const u8* srcData, int srcSize, u8* bufferAddr);
