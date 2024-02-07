@@ -151,4 +151,26 @@ typedef u8 Addr[];
         ;                                                                                   \
     (void)0
 
+typedef struct Vec3w {
+    s32 x;
+    s32 y;
+    s32 z;
+} Vec3w;
+
+typedef struct ZoneData {
+/* 0x00 */ void* unk0;
+/* 0x04 */ Vec3w min;
+/* 0x10 */ Vec3w max;
+/* 0x1C */ s16 zoneID;
+/* 0x1E */ s16 numOfZonesToLoad;
+/* 0x20 */ s16 unk20;
+/* 0x22 */ s16 unk22; //padding?
+/* 0x24 */ s32 respawnX;
+/* 0x28 */ s32 respawnY;
+/* 0x2C */ s32 respawnZ;
+} ZoneData;
+
+extern ZoneData gZones[64]; //unsure of max
+
+
 #endif

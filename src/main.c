@@ -18,6 +18,7 @@ s32 parasolPullFrame = 0;
 f32 parasolPullSpeed = 0.0f;
 s32 parasolPulled = 0;
 f32 parasolPullAngle = 0.0f;
+s32 printPositionBool = 0;
 
 extern Gfx* gMainGfxPosPtr;
 
@@ -40,7 +41,7 @@ s32 savestateCurrentSlot = 0;
 extern s32 savestate1Size;
 s32 savestate2Size = 0;
 s32 savestate3Size = 0;
-s32 boolPrintCustomText = 1;
+s32 boolPrintCustomText = 3;
 volatile s32 isSaveOrLoadActive = 0;
 s32 saveOrLoadStateMode = 0;
 
@@ -127,7 +128,7 @@ void SetDefaultTextParametersWithColor(TextColor* color, s32 x, s32 y) {
     textStyle = 1;
     textKerning = 1;
     setDebugTextPosition(x, y, 0x32);
-    SetTextWidthAndHeight(0.6f, 0.6f);
+    SetTextWidthAndHeight(0.75f, 0.75f);
     SetTextColor(color);
 }
 
@@ -654,24 +655,67 @@ void printParasolPulledFrame(void) {
     printDebugText(buffer);
 }
 
+void PrintPosition(void) {
+    TextPosition textPos = {20, 50};
+    char buffer[100];
+    _bzero(buffer, sizeof(buffer));
+    SetDefaultTextParametersWithColor(&Purple, textPos.xPos, textPos.yPos);
+    _sprintf(buffer, "X: %2.2f", gPlayerActors[0].pos.x);
+    printDebugText(buffer);
+
+    _bzero(buffer, sizeof(buffer));
+    SetDefaultTextParametersWithColor(&Purple, textPos.xPos, textPos.yPos + 12);
+    _sprintf(buffer, "Y: %2.2f", gPlayerActors[0].pos.y);
+    printDebugText(buffer); 
+
+    _bzero(buffer, sizeof(buffer));
+    SetDefaultTextParametersWithColor(&Purple, textPos.xPos, textPos.yPos + 24);
+    _sprintf(buffer, "Z: %2.2f", gPlayerActors[0].pos.z);
+    printDebugText(buffer); 
+}
+
 void printCustomTextInC(void) {
     if (boolPrintCustomText == 0) {
         return;
     }
+
     if (callsEnteringSkyland == 0) {
         callsEnteringSkyland = calls;
     }
 
-    //otherwise, print stuff
-    //printCallsUntilDecidedPowerup();
-    printParasolPulledFrame();
-    printCurrentPowerupLock();
-    printCurrentSpeed();
-    //printCurrentSeed();
-    //printCallsAfterChosenPowerup();
-    //printCallsEnteringSkyland();
-    //printVoidOutCalls();
-    printCurrentRespawnZone();
+    switch (boolPrintCustomText) {
+        case 1:
+            printCurrentRespawnZone();
+            printCurrentSpeed();
+            printCurrentPowerupLock();
+            break;
+        case 2:
+            PrintPosition();
+            break;
+        case 3:
+            printParasolPulledFrame();
+            printCurrentSpeed();
+            PrintPosition();
+            break;
+        case 4:
+            printParasolPulledFrame();
+            PrintPosition();
+            printCurrentRespawnZone();
+            printCurrentSpeed();
+            printCurrentPowerupLock();
+            break;
+    }
+
+    // //printCallsUntilDecidedPowerup();
+    // printParasolPulledFrame();
+    // printCurrentPowerupLock();
+    // printCurrentSpeed();
+    // //printCurrentSeed();
+    // //printCallsAfterChosenPowerup();
+    // //printCallsEnteringSkyland();
+    // //printVoidOutCalls();
+    // printCurrentRespawnZone();
+    // PrintPosition();
 }
 
 void hookAt800DE480(void);
@@ -803,20 +847,28 @@ void perFrameCFunction(void) {
     
     if (stateCooldown == 0) {
         if (currentlyPressedButtons & U_JPAD) {
-            boolPrintCustomText ^= 1;
+            boolPrintCustomText++;
+            if (boolPrintCustomText == 5) {
+                boolPrintCustomText = 0;
+            }
         } else {
             checkInputsForSavestates();
         }
     }
 
     if (unkStep == 3) {
-        if (currentlyPressedButtons & D_JPAD) {
+        if (currentlyHeldButtons & R_TRIG && currentlyPressedButtons & D_JPAD) {
             curPowerupLock++;
             if (curPowerupLock >= 3) { //if advanced to 3, reset to 0
                 curPowerupLock = 0;
             }
         }
     }
+
+    //dpad down only, toggle XYZ display
+    // if (!(currentlyHeldButtons & R_TRIG) && currentlyPressedButtons & D_JPAD) {
+    //     printPositionBool ^= 1;
+    // }
 
     switch (curPowerupLock) {
         case RANDOM:

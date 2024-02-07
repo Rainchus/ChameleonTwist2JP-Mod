@@ -123,10 +123,7 @@
 .definelabel func_8002616C, 0x8002616C
 .definelabel p1Airborne, 0x80187B38
 .definelabel p1IfParasol, 0x80187B54
-
-
-
-
+.definelabel gZones, 0x801857F0
 
 
 //mainThread 8001C81C
