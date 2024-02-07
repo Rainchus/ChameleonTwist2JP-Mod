@@ -1,6 +1,8 @@
 #include "../include/ct2.h"
 #include <stdarg.h>
 
+
+extern Gfx Entity_YellowBlock_Render[];
 //80030AA0 texture entities
 
 //func_800D6050 prints debug stuff
@@ -790,20 +792,20 @@ Vtx vertexData[] = {
     { baseX + 25, 50, 0, 0, GPACK_RGBA5551(0, 0, 255, 1), 0, 0 }
 };
 
-Gfx displayList[] = {
-    gsDPPipeSync(),
-    gsDPSetCycleType(G_CYC_1CYCLE),
-    gsDPSetRenderMode(G_RM_AA_ZB_OPA_SURF, G_RM_AA_ZB_OPA_SURF2),
-    gsSPClearGeometryMode(G_SHADE | G_CULL_BOTH | G_FOG | G_LIGHTING | G_TEXTURE_GEN | G_TEXTURE_GEN_LINEAR | G_SHADING_SMOOTH),
-    gsSPSetGeometryMode(G_ZBUFFER | G_CULL_BACK),
-    gsSPVertex(vertexData, 3, 0),
-    gsDPSetPrimColor(0, 0, 255, 255, 255, 255),
-    gsSP1Triangle(0, 1, 2, 0),
-    gsSPEndDisplayList()
-};
+// Gfx displayList[] = {
+//     gsDPPipeSync(),
+//     gsDPSetCycleType(G_CYC_1CYCLE),
+//     gsDPSetRenderMode(G_RM_AA_ZB_OPA_SURF, G_RM_AA_ZB_OPA_SURF2),
+//     gsSPClearGeometryMode(G_SHADE | G_CULL_BOTH | G_FOG | G_LIGHTING | G_TEXTURE_GEN | G_TEXTURE_GEN_LINEAR | G_SHADING_SMOOTH),
+//     gsSPSetGeometryMode(G_ZBUFFER | G_CULL_BACK),
+//     gsSPVertex(vertexData, 3, 0),
+//     gsDPSetPrimColor(0, 0, 255, 255, 255, 255),
+//     gsSP1Triangle(0, 1, 2, 0),
+//     gsSPEndDisplayList()
+// };
 
 void DLWriteHook(void) {
-    gSPDisplayList(gMainGfxPosPtr++, displayList);
+    gSPDisplayList(gMainGfxPosPtr++, Entity_YellowBlock_Render);
 
     // func_8002616C(); //restore from hook
 }

@@ -9,5 +9,6 @@
 .importobj "obj/lib.o"
 .importobj "obj/lz4.o"
 .importobj "obj/main.o"
+.importobj "obj/yellow_block.o"
 .include "asm/hooks.s"
 .close //close file
