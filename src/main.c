@@ -53,7 +53,7 @@ s32 savestateCurrentSlot = 0;
 extern s32 savestate1Size;
 s32 savestate2Size = 0;
 s32 savestate3Size = 0;
-s32 boolPrintCustomText = 3;
+s32 boolPrintCustomText = 0;
 volatile s32 isSaveOrLoadActive = 0;
 s32 saveOrLoadStateMode = 0;
 
