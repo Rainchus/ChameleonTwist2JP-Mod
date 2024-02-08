@@ -132,6 +132,8 @@
 .definelabel guPerspective, 0x800DCF10
 .definelabel guLookAt, 0x800DDB78
 .definelabel guMtxCatL, 0x800E0520
+.definelabel bossHpBar, 0x8016063C
+.definelabel osGetCount, 0x800DF550
 
 //mainThread 8001C81C
 
@@ -199,6 +201,36 @@ J moreReplacedCode
 .org 0x80029610
 J perFrameASM
 NOP
+
+//mushroom boss
+.org 0x800A058C
+J hookAt800A058C
+ADDIU sp, sp, 0x28
+
+//burger boss
+.org 0x8009D394
+J hookAt8009D394
+ADDIU sp, sp, 0x78
+
+//wheelrus
+.org 0x8009E9F8
+J hookAt8009E9F8
+ADDIU sp, sp, 0x28
+
+//frog boss
+.org 0x8009B66C
+J hookAt8009B66C
+NOP
+
+//robot boss
+.org 0x800A3150
+J hookAt800A3150
+ADDIU sp, sp, 0x28
+
+//sphynx boss
+.org 0x800A6384
+J hookAt800A6384
+ADDIU sp, sp, 0x28
 
 //.org 0x800267A0
 //J DLWriteHookAsm

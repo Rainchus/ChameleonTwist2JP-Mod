@@ -1,7 +1,6 @@
 #include "../include/ct2.h"
 #include <stdarg.h>
 
-
 extern Gfx Entity_YellowBlock_Render[];
 //80030AA0 texture entities
 
@@ -47,6 +46,7 @@ typedef struct unkLookatStruct {
 extern s16 unkStep;
 extern s16 debugFlag;
 extern s16 textStyle;
+void MainTimer(void);
 
 s32 stateCooldown = 0; //does this work??
 s32 savestateCurrentSlot = 0;
@@ -56,20 +56,6 @@ s32 savestate3Size = 0;
 s32 boolPrintCustomText = 3;
 volatile s32 isSaveOrLoadActive = 0;
 s32 saveOrLoadStateMode = 0;
-
-typedef struct RGBA {
-    u8 r;
-    u8 g;
-    u8 b;
-    u8 a;
-} RGBA;
-
-typedef struct TextColor {
-    RGBA zero;
-    RGBA one;
-    RGBA two;
-    RGBA three;
-} TextColor;
 
 TextColor RedOrange = {
     {255, 255, 0, 255},
@@ -303,11 +289,6 @@ u32 func_800E0790_Hook(void);
 void copyCallsToPowerupCalls(void);
 void printCustomText(void);
 
-typedef struct TextPosition {
-    s32 xPos;
-    s32 yPos;
-} TextPosition;
-
 s32 curStringPrintingIndex = 0;
 
 char* MenuStrings0[] = {
@@ -432,6 +413,22 @@ void SetTextColor2(u8 red, u8 blue, u8 green, u8 alpha) {
     textGreen = green;
     textOpacity = alpha;
     ifTextColor = 1;
+}
+
+extern u32 timerState;
+
+void PrintTimer(void) {
+    u8 buffer[40];
+    TextPosition textPos = {180, 210};
+
+    if (timerState == 0) {
+        return;
+    }
+
+    _bzero(buffer, sizeof(buffer));
+    SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
+    _sprintf(buffer, "%2.2f", gPlayerActors[0].magnitude);
+    printDebugText(buffer);
 }
 
 
@@ -687,6 +684,9 @@ void PrintPosition(void) {
 }
 
 void printCustomTextInC(void) {
+
+    MainTimer();
+
     if (boolPrintCustomText == 0) {
         return;
     }
@@ -735,6 +735,7 @@ void hookAt800D4240(void);
 void osPiStartDmaHook(void);
 void osEPiStartDmaHook(void);
 void func_80035E00_Hook(unkLookatStruct* arg0);
+void hookAt800D5C54(void);
 void cBootFunction(void) { //ran once on boot
     crash_screen_init();
     stateCooldown = 0;
@@ -747,6 +748,8 @@ void cBootFunction(void) { //ran once on boot
     hookCode((void*)0x8004E3DC, &recordCallsAtVoidOut);
 
     hookCode((void*)0x80035E00, &func_80035E00_Hook);
+    
+    hookCode((void*)0x800D5C54, &hookAt800D5C54);
 
     //time to randomly guess at fixing savestates wheeeeee
     //hookCode((void*)0x800DE480, &hookAt800DE480);//(adds stability?)
@@ -822,26 +825,9 @@ extern Mtx* MatrixBuffer;
 
 typedef f32 Matrix4f[4][4]; // size = 0x40
 
-void thing(void) {
-    // Translation values (adjust these as needed)
-    float translateX = -5000.0f;
-    float translateY = 5000.0f;
-    float translateZ = 26700.0f;
-
-    // Create a translation matrix
-    Mtx translationMatrix;
-    guTranslate(&translationMatrix, translateX, translateY, translateZ);
-
-    // Apply the translation to the modelview matrix
-    guMtxCatL(MatrixBuffer, &translationMatrix, MatrixBuffer);
-
-    // Render the 3D object
-    gSPDisplayList(gMainGfxPosPtr++, Entity_YellowBlock_Render);
-}
-
-void DLWriteHook(void) {
-    gSPDisplayList(gMainGfxPosPtr++, Entity_YellowBlock_Render);
-}
+// void DLWriteHook(void) {
+//     gSPDisplayList(gMainGfxPosPtr++, Entity_YellowBlock_Render);
+// }
 
 void tickAirborneFrames(void) {
     if (p1Airborne == 1) {
@@ -946,8 +932,9 @@ void func_80035E00_Hook(unkLookatStruct* arg0) { //renders the world
     gSPPerspNormalize(gMainGfxPosPtr++, sp56);
     gSPMatrix(gMainGfxPosPtr++, MatrixBuffer++, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_PROJECTION);
     guLookAt(MatrixBuffer, arg0->unk48, arg0->unk4C, arg0->unk50, arg0->unk54, arg0->unk58, arg0->unk5C, 0.0f, 1.0f, 0.0f);
-    gSPMatrix(gMainGfxPosPtr++, MatrixBuffer++, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-
     //added code
     gSPDisplayList(gMainGfxPosPtr++, Entity_YellowBlock_Render);
+    gSPMatrix(gMainGfxPosPtr++, MatrixBuffer++, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+
+
 }

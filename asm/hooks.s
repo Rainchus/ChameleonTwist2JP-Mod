@@ -49,6 +49,14 @@ NOP
 J 0x8004E3E4
 NOP
 
+hookAt800D5C54:
+LI a0, isSaveOrLoadActive
+LW a1, 0x0000 (a0)
+BNEZ a1, hookAt800D5C54
+NOP
+J 0x800D5B64
+OR a0, s6, r0
+
 hookAt80026750:
 LI a0, isSaveOrLoadActive
 LW a1, 0x0000 (a0)
@@ -249,6 +257,30 @@ jumpTo800E15A0:
 J 0x800E15A0
 NOP
 
+hookAt800A058C:
+J afterBossHpSet
+OR a0, v0, r0 //preserve v0
+
+hookAt8009B66C:
+J afterBossHpSet
+OR a0, v0, r0 //preserve v0
+
+hookAt8009D394:
+J afterBossHpSet
+OR a0, v0, r0 //preserve v0
+
+hookAt8009E9F8:
+J afterBossHpSet
+OR a0, v0, r0 //preserve v0
+
+hookAt800A6384:
+J afterBossHpSet
+OR a0, v0, r0 //preserve v0
+
+//robot boss
+hookAt800A3150:
+J afterBossHpSet
+OR a0, v0, r0 //preserve v0
 
 //hook 0 for debug menu
 //.org 0x800D6050

@@ -157,6 +157,27 @@ typedef struct Vec3w {
     s32 z;
 } Vec3w;
 
+typedef struct TextPosition {
+    s32 xPos;
+    s32 yPos;
+} TextPosition;
+
+typedef struct RGBA {
+    u8 r;
+    u8 g;
+    u8 b;
+    u8 a;
+} RGBA;
+
+typedef struct TextColor {
+    RGBA zero;
+    RGBA one;
+    RGBA two;
+    RGBA three;
+} TextColor;
+
+extern f32 bossHpBar;
+
 typedef struct ZoneData {
 /* 0x00 */ void* unk0;
 /* 0x04 */ Vec3w min;

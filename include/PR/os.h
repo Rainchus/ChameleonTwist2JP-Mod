@@ -573,7 +573,8 @@ typedef struct {
  * ---------	----------	------------------------
  * 62.5 Mhz	93.75 Mhz	46.875 Mhz
  */
-extern u64 osClockRate;
+#define	OS_CLOCK_RATE		62500000LL
+extern OSTime osClockRate;
 
 #define OS_NSEC_TO_CYCLES(n)	(((u64)(n)*(osClockRate))/1000000000LL)
 #define OS_USEC_TO_CYCLES(n)	(((u64)(n)*(osClockRate))/1000000LL)

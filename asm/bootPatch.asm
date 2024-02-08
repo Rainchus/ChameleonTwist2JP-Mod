@@ -84,49 +84,6 @@ LHU t6, 0xAF60 (t6)
 //J 0x800267A8
 //NOP
 
-DLWriteHookAsm2:
-ADDIU sp, sp, -0x18
-SW ra, 0x0014 (sp)
-JAL DLWriteHook
-NOP
-LW ra, 0x0014 (sp)
-JR RA
-ADDIU sp, sp, 0x18
-
-DLWriteHookAsm3:
-JAL DLWriteHook
-NOP
-LW t4, 0x0050 (s0)
-J 0x80030D70
-LUI t8, 0xD9FF
-
-DLWriteHookAsm4:
-JAL DLWriteHook
-NOP
-JAL 0x800D4D70
-OR a0, r0, r0
-J 0x800260E8
-NOP
-
-DLWriteHookAsm5:
-JAL DLWriteHook
-SW a2, 0x0000 (v1)
-J 0x800261C0
-NOP
-
-DLWriteHookAsm6:
-JAL DLWriteHook
-NOP
-LUI t6, 0x800F
-J 0x800261D0
-LW t6, 0xAD60 (t6)
-
-DLWriteHookAsm7:
-J DLWriteHook
-NOP
-
-
-
 __osDpDeviceBusy:
 LUI t6, 0xA410
 LW a0, 0x000C (t6)
