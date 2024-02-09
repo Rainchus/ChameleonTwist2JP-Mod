@@ -160,6 +160,7 @@ Vtx D_0A000000_E3B870[24] = {
 };
 
 Gfx Entity_YellowBlock_LoadTexture[] = {
+    gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0,  TEXEL0, 0, SHADE, 0,  0, 0, 0, 1,  0, 0, 0, 1),
     gsDPSetTextureLUT(G_TT_NONE),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPSetTextureDetail(G_TD_CLAMP),

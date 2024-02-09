@@ -93,7 +93,7 @@ extern s16 textGreen;
 extern s16 textOpacity;
 extern s16 ifTextColor;
 extern s16 textKerning;
-
+extern s16 textStyle;
 extern s32 p1Airborne;
 extern s16 p1IfParasol;
 
@@ -176,6 +176,17 @@ typedef struct TextColor {
     RGBA three;
 } TextColor;
 
+extern TextColor RedOrange;
+extern TextColor Cyan;
+extern TextColor Purple;
+extern TextColor White;
+extern TextColor Green;
+void SetTextColor(TextColor* color);
+void SetTextColor2(u8 red, u8 blue, u8 green, u8 alpha);
+void SetDefaultTextParametersWithColor(TextColor* color, s32 x, s32 y);
+void _sprintf(void* destination, void* fmt, ...);
+s32 _Printf(void* destination, void* fmt, ...);
+s32 _strlen(const u8 *s);
 extern f32 bossHpBar;
 
 typedef struct ZoneData {

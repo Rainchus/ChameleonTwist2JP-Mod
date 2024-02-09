@@ -10,6 +10,7 @@
 .importobj "obj/lz4.o"
 .importobj "obj/main.o"
 .importobj "obj/math.o"
+.importobj "obj/menu.o"
 .importobj "obj/threads.o"
 .importobj "obj/timer.o"
 .importobj "obj/yellow_block.o"

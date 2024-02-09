@@ -134,7 +134,7 @@
 .definelabel guMtxCatL, 0x800E0520
 .definelabel bossHpBar, 0x8016063C
 .definelabel osGetCount, 0x800DF550
-
+.definelabel _strlen, 0x800E16FC
 //mainThread 8001C81C
 
 .headersize 0x80024C00
@@ -259,3 +259,7 @@ ADDIU sp, sp, 0x28
 //.org 0x80035F54
 //J DLWriteHookAsm7
 //ADDIU sp, sp, 0x58
+
+.org 0x80028D28
+J stuff
+SH t6, 0x7BBC (at)

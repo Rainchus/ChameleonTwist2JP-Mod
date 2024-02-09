@@ -45,7 +45,6 @@ typedef struct unkLookatStruct {
 
 extern s16 unkStep;
 extern s16 debugFlag;
-extern s16 textStyle;
 void MainTimer(void);
 
 s32 stateCooldown = 0; //does this work??
@@ -264,8 +263,6 @@ extern u32 rngSeed;
 void recordCallsAtVoidOut(void);
 s32 curPowerupLock = 0;
 
-void _Printf(void* destination, void* fmt, ...);
-
 void _sprintf(void* destination, void* fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -431,15 +428,6 @@ void PrintTimer(void) {
     printDebugText(buffer);
 }
 
-
-// s32 textCyanColor[] = {
-//     0x2A, 0xEE, 0xE9, 0xFF, // top
-//     0x00, 0xC0, 0xDA, 0xFF, // bottom
-//     0x2A, 0xEE, 0xE9, 0xFF, // top
-//     0x00, 0xC0, 0xDA, 0xFF  // bottom
-// };
-
-
 void printCurrentRespawnZone(void) {
     u8 buffer[40];
     TextPosition textPos = {20, 196};
@@ -460,6 +448,8 @@ char* OffOrOnString[] = {
     "OFF",
     "ON"
 };
+
+void pageMainDisplay(s32 currPageNo, s32 currOptionNo);
 
 void DisplayDebugMenu(void) {
     u8 buffer[100];
@@ -683,9 +673,13 @@ void PrintPosition(void) {
     printDebugText(buffer); 
 }
 
+s32 currPageNo = 0;
+s32 currOptionNo = 0;
+
 void printCustomTextInC(void) {
 
     MainTimer();
+    pageMainDisplay(currPageNo, currOptionNo);
 
     if (boolPrintCustomText == 0) {
         return;
@@ -932,9 +926,8 @@ void func_80035E00_Hook(unkLookatStruct* arg0) { //renders the world
     gSPPerspNormalize(gMainGfxPosPtr++, sp56);
     gSPMatrix(gMainGfxPosPtr++, MatrixBuffer++, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_PROJECTION);
     guLookAt(MatrixBuffer, arg0->unk48, arg0->unk4C, arg0->unk50, arg0->unk54, arg0->unk58, arg0->unk5C, 0.0f, 1.0f, 0.0f);
-    //added code
-    gSPDisplayList(gMainGfxPosPtr++, Entity_YellowBlock_Render);
     gSPMatrix(gMainGfxPosPtr++, MatrixBuffer++, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
 
-
+    //added code
+    //gSPDisplayList(gMainGfxPosPtr++, Entity_YellowBlock_Render);
 }

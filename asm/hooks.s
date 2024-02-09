@@ -287,6 +287,12 @@ OR a0, v0, r0 //preserve v0
 //J PrintDebugMenu
 //ADDU a0, r0, a1
 
+stuff:
+JAL SetTimerStuff
+NOP
+J 0x800293B8
+NOP
+
 
 .headersize 0x802032D4 - 0x20B844
 .org 0x802032D4

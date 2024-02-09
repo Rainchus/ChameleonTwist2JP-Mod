@@ -1,7 +1,6 @@
 #include "../include/ct2.h"
 #include <stdarg.h>
 
-extern TextColor RedOrange;
 void _sprintf(void* destination, void* fmt, ...);
 void SetDefaultTextParametersWithColor(TextColor* color, s32 x, s32 y);
 OSTime osClockRate = OS_CLOCK_RATE;
@@ -15,6 +14,16 @@ u64 elapsedCounts = 0;
 u32 startingCount = 0;
 u32 prevCount = 0;
 u32 timerState = 0;
+
+
+
+void SetTimerStuff(void) {
+    elapsedCounts = 0;
+    startingCount = osGetCount();
+    prevCount = startingCount;
+    elapsedMilliseconds = 0;
+    timerState = NOT_RUNNING;
+}
 
 s32 afterBossHpSet(s32 arg0) {
     elapsedCounts = 0;
