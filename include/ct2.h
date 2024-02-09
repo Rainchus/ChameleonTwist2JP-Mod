@@ -216,9 +216,16 @@ void setTextGradient(s32, s32, s32, s32, s32);
 extern u16 currentlyPressedButtons;
 extern u16 currentlyHeldButtons;
 
+enum Toggles {
+    NO_TOGGLE = 0,
+    //page 0
+    TOGGLE_DISPLAY_SPEED
+};
+
 extern s32 currPageNo;
 extern s32 currOptionNo;
 extern s32 isMenuActive;
 void updateMenuInput(void);
+extern s8 toggles[];
 
 #endif

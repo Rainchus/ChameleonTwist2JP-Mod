@@ -4,12 +4,6 @@
 #define UNITS_BETWEEN_LINES 12
 #define X_COORD_PER_LETTER 9
 
-enum Toggles {
-    NO_TOGGLE = 0,
-    //page 0
-    TOGGLE_HIDE_SAVESTATE_TEXT
-};
-
 s8 toggles[] = {
     2,  // NO_TOGGLE
     //page 0
@@ -25,8 +19,8 @@ typedef struct menuPage {
     /* 0x50 */ char*** selectionText;
 } menuPage;
 
-s32 toggleHideSavestateText(void) {
-    toggles[TOGGLE_HIDE_SAVESTATE_TEXT] ^= 1;
+s32 toggleDisplaySpeed(void) {
+    toggles[TOGGLE_DISPLAY_SPEED] ^= 1;
     return 1;
 }
 
@@ -51,13 +45,13 @@ menuPage page0 = {
     1, //optionCount
     0, //pageIndex
     { //options
-        "Savestate Text",
+        "Display Speed",
     },
     { //menuProc
-        &toggleHideSavestateText,
+        &toggleDisplaySpeed,
     },
     { //flags
-        TOGGLE_HIDE_SAVESTATE_TEXT,
+        TOGGLE_DISPLAY_SPEED,
     },
 
     page0Strings,
@@ -69,16 +63,13 @@ menuPage* pageList[] = {
 
 s32 pageListTotal = ARRAY_COUNT(pageList);
 
-TextPosition MenuRoot = {100, 120};
-
+TextPosition MenuRoot = {20, 60};
 char menuOptionBuffer[100] = { 0 };  // Buffer for menu options text
-
 
 void updateMenuInput(void) {
     if (currentlyPressedButtons & CONT_UP) {
         if (currOptionNo > 0) {
             currOptionNo--;
-            //playSound(0x2A, (void*)0x80168DA8, 0);
         } else {
             currOptionNo = pageList[currPageNo]->optionCount - 1; //wrap menu
         }
@@ -86,7 +77,6 @@ void updateMenuInput(void) {
     else if (currentlyPressedButtons & CONT_DOWN) {
         if (currOptionNo < pageList[currPageNo]->optionCount - 1) {
             currOptionNo++;
-            //playSound(0x2A, (void*)0x80168DA8, 0);
         } else {
             currOptionNo = 0; //wrap menu
         }

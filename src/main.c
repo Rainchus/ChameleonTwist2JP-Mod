@@ -52,7 +52,6 @@ s32 savestateCurrentSlot = 0;
 extern s32 savestate1Size;
 s32 savestate2Size = 0;
 s32 savestate3Size = 0;
-s32 boolPrintCustomText = 0;
 volatile s32 isSaveOrLoadActive = 0;
 s32 saveOrLoadStateMode = 0;
 
@@ -677,41 +676,41 @@ void printCustomTextInC(void) {
 
     MainTimer();
 
+    if (toggles[TOGGLE_DISPLAY_SPEED] == 1) {
+        printCurrentSpeed();
+    }
+
     if (isMenuActive == 1) {
         updateMenuInput();
         pageMainDisplay(currPageNo, currOptionNo);
-    }
-
-    if (boolPrintCustomText == 0) {
-        return;
     }
 
     if (callsEnteringSkyland == 0) {
         callsEnteringSkyland = calls;
     }
 
-    switch (boolPrintCustomText) {
-        case 1:
-            printCurrentRespawnZone();
-            printCurrentSpeed();
-            printCurrentPowerupLock();
-            break;
-        case 2:
-            PrintPosition();
-            break;
-        case 3:
-            printParasolPulledFrame();
-            printCurrentSpeed();
-            PrintPosition();
-            break;
-        case 4:
-            printParasolPulledFrame();
-            PrintPosition();
-            printCurrentRespawnZone();
-            printCurrentSpeed();
-            printCurrentPowerupLock();
-            break;
-    }
+    // switch (boolPrintCustomText) {
+    //     case 1:
+    //         printCurrentRespawnZone();
+    //         printCurrentSpeed();
+    //         printCurrentPowerupLock();
+    //         break;
+    //     case 2:
+    //         PrintPosition();
+    //         break;
+    //     case 3:
+    //         printParasolPulledFrame();
+    //         printCurrentSpeed();
+    //         PrintPosition();
+    //         break;
+    //     case 4:
+    //         printParasolPulledFrame();
+    //         PrintPosition();
+    //         printCurrentRespawnZone();
+    //         printCurrentSpeed();
+    //         printCurrentPowerupLock();
+    //         break;
+    // }
 
     // //printCallsUntilDecidedPowerup();
     // printParasolPulledFrame();
@@ -868,14 +867,7 @@ void perFrameCFunction(void) {
     }
     
     if (stateCooldown == 0) {
-        if (currentlyPressedButtons & U_JPAD) {
-            boolPrintCustomText++;
-            if (boolPrintCustomText == 5) {
-                boolPrintCustomText = 0;
-            }
-        } else {
-            checkInputsForSavestates();
-        }
+        checkInputsForSavestates();
     }
 
     if (unkStep == 3) {
