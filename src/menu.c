@@ -67,14 +67,49 @@ menuPage* pageList[] = {
     &page0,
 };
 
+s32 pageListTotal = ARRAY_COUNT(pageList);
+
 TextPosition MenuRoot = {100, 120};
 
 char menuOptionBuffer[100] = { 0 };  // Buffer for menu options text
 
-    // _bzero(buffer, sizeof(buffer));
-    // SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
-    // _sprintf(buffer, "%d", callsAtPowerupDecision);
-    // printDebugText(buffer);
+
+void updateMenuInput(void) {
+    if (currentlyPressedButtons & CONT_UP) {
+        if (currOptionNo > 0) {
+            currOptionNo--;
+            //playSound(0x2A, (void*)0x80168DA8, 0);
+        } else {
+            currOptionNo = pageList[currPageNo]->optionCount - 1; //wrap menu
+        }
+    }
+    else if (currentlyPressedButtons & CONT_DOWN) {
+        if (currOptionNo < pageList[currPageNo]->optionCount - 1) {
+            currOptionNo++;
+            //playSound(0x2A, (void*)0x80168DA8, 0);
+        } else {
+            currOptionNo = 0; //wrap menu
+        }
+    }
+    else if (currentlyPressedButtons & CONT_LEFT) {
+        if (currPageNo > 0) {
+            currPageNo--;
+            currOptionNo = 0;
+        }
+    }
+    else if (currentlyPressedButtons & CONT_RIGHT) {
+        if (currPageNo < pageListTotal - 1) {
+            currPageNo++;
+            currOptionNo = 0;
+        }
+    }
+    else if (currentlyPressedButtons & B_BUTTON) {
+        isMenuActive = 0;
+    }
+    else if (currentlyPressedButtons & A_BUTTON) {
+        pageList[currPageNo]->menuProc[currOptionNo]();
+    }
+}
 
 void pageMainDisplay(s32 currPageNo, s32 currOptionNo) {
     int i;
@@ -89,22 +124,20 @@ void pageMainDisplay(s32 currPageNo, s32 currOptionNo) {
 
         //print cursor current option as cyan
         if (i == currOptionNo) {
-            SetTextColor(&Cyan);
+            SetDefaultTextParametersWithColor(&Cyan, menu.xPos, menu.yPos);
         } else {
-            SetTextColor(&White);
+            SetDefaultTextParametersWithColor(&White, menu.xPos, menu.yPos);
         }
 
         //if menu option has no toggle; it executes something when used immediately
         //therefore, only print the option and not any extra text
         if (currPage->flags[i] == -1) {
-            SetDefaultTextParametersWithColor(&RedOrange, menu.xPos, menu.yPos);
             printDebugText(menuOptionBuffer);
             menu.yPos += UNITS_BETWEEN_LINES; //each line is 12 units below the previous
             continue;
         }
 
         //print option text
-        SetDefaultTextParametersWithColor(&RedOrange, menu.xPos, menu.yPos);
         printDebugText(menuOptionBuffer);
 
         if (toggles[currPage->flags[i]] == 0) {
@@ -113,11 +146,10 @@ void pageMainDisplay(s32 currPageNo, s32 currOptionNo) {
             SetDefaultTextParametersWithColor(&Green, menu.xPos + (strLength * X_COORD_PER_LETTER), menu.yPos);
         }
 
-        if (currPage->selectionText[i][toggles[currPage->flags[i]]] != 0) {
-            _bzero(&menuOptionBuffer, sizeof(menuOptionBuffer));
-            _sprintf(menuOptionBuffer, currPage->selectionText[i][toggles[currPage->flags[i]]]);
-        }
+        _bzero(&menuOptionBuffer, sizeof(menuOptionBuffer));
+        _sprintf(menuOptionBuffer, currPage->selectionText[i][toggles[currPage->flags[i]]]);
 
+        //print ON/OFF or other text next to option
         printDebugText(menuOptionBuffer);
         menu.yPos += UNITS_BETWEEN_LINES; //each line is 12 units below the previous  
     }

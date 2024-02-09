@@ -95,10 +95,6 @@ TextColor Green = {
 #define SPEED 1
 #define X3 2
 
-extern f32 powerUpFloatArray[8];
-void setTextGradient(s32, s32, s32, s32, s32);
-extern u16 currentlyPressedButtons;
-extern u16 currentlyHeldButtons;
 #define SAVE_MODE 0
 #define LOAD_MODE 1
 
@@ -675,11 +671,16 @@ void PrintPosition(void) {
 
 s32 currPageNo = 0;
 s32 currOptionNo = 0;
+s32 isMenuActive = 0;
 
 void printCustomTextInC(void) {
 
     MainTimer();
-    pageMainDisplay(currPageNo, currOptionNo);
+
+    if (isMenuActive == 1) {
+        updateMenuInput();
+        pageMainDisplay(currPageNo, currOptionNo);
+    }
 
     if (boolPrintCustomText == 0) {
         return;
@@ -884,6 +885,11 @@ void perFrameCFunction(void) {
                 curPowerupLock = 0;
             }
         }
+    }
+
+    //R + dpad down toggles menu
+    if (currentlyHeldButtons & R_TRIG && currentlyPressedButtons & CONT_DOWN) {
+        isMenuActive ^= 1;
     }
 
     //dpad down only, toggle XYZ display

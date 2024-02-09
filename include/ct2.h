@@ -209,8 +209,16 @@ typedef struct testingstuff {
 } testingstuff;
 
 extern testingstuff imageStuff;
-
 extern ZoneData gZones[64]; //unsure of max
 
+extern f32 powerUpFloatArray[8];
+void setTextGradient(s32, s32, s32, s32, s32);
+extern u16 currentlyPressedButtons;
+extern u16 currentlyHeldButtons;
+
+extern s32 currPageNo;
+extern s32 currOptionNo;
+extern s32 isMenuActive;
+void updateMenuInput(void);
 
 #endif
