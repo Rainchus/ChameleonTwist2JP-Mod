@@ -128,37 +128,6 @@ LW             S0, 0x0010 (SP)
 JR             RA
 ADDIU          SP, SP, 0x18
 
-crash_screen_sleep: //takes arg a0, ms to sleep
-ADDIU sp, sp, -0x20
-ORI v0, r0, 0xB71B
-MULT a0, v0
-DADDU a0, r0, r0
-DADDU a1, r0, r0
-SW ra, 0x0018 (sp)
-SW s1, 0x0014 (sp)
-SW s0, 0x0010 (sp)
-MFHI s0
-MFLO s1
-JAL osSetTime
-NOP
-crashScreenLoop:
-JAL osGetTime
-NOP
-DADDU a0, v0, r0
-DADDU a1, v1, r0
-SLTU v0, a0, s0
-BNEZ v0, crashScreenLoop
-NOP
-BNE s0, a0, exitCrashFunc
-SLTU v0, a1, s1
-BNEZ v0, crashScreenLoop
-NOP
-exitCrashFunc:
-LW ra, 0x0018 (sp)
-LW s1, 0x0014 (sp)
-LW s0, 0x0010 (sp)
-JR RA
-ADDIU sp, sp, 0x20
 
 customMemCpy: //requires 0x08 alignment
 BLEZ a2, exitMemCpy

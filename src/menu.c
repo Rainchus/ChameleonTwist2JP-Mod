@@ -1,13 +1,15 @@
 #include "../include/ct2.h"
 
 #define FUNCS_PER_PAGE 8
-#define UNITS_BETWEEN_LINES 12
+#define UNITS_BETWEEN_LINES 14
 #define X_COORD_PER_LETTER 9
 
 s8 toggles[] = {
     2,  // NO_TOGGLE
     //page 0
     1,  // TOGGLE_HIDE_SAVESTATE_TEXT
+    0, // TOGGLE_DISPLAY_POSITION
+    8, //TOGGLE_POWERUP_LOCK 
 };
 
 typedef struct menuPage {
@@ -24,12 +26,73 @@ s32 toggleDisplaySpeed(void) {
     return 1;
 }
 
+s32 toggleDisplayPosition(void) {
+    toggles[TOGGLE_DISPLAY_POSITION] ^= 1;
+    return 1;
+}
+
+s32 togglePowerupLock(void) {
+    toggles[TOGGLE_POWERUP_LOCK]++;
+    if (toggles[TOGGLE_POWERUP_LOCK] > 8) {
+        toggles[TOGGLE_POWERUP_LOCK] = 0;
+    }
+    return 1;
+}
+
 char string_ON[] = {
-    "ON"
+    "On"
 };
 
 char string_OFF[] = {
-    "OFF"
+    "Off"
+};
+
+char string_Powerup_Big[] = { //0
+    "Big"
+};
+
+char string_Powerup_Speed_Up[] = { //1
+    "Speed Up"
+};
+
+char string_Powerup_Speed_Down[] = { //2
+    "Speed Down"
+};
+
+char string_Powerup_x2[] = { //3
+    "x2"
+};
+
+char string_Powerup_x3[] = { //4
+    "x3"
+};
+
+char string_Powerup_Invicible[] = { //5
+    "Invicible"
+};
+
+char string_Powerup_Short_Tongue[] = { //6
+    "Short Tongue"
+};
+
+char string_Powerup_Nothing[] = { //7
+    "Nothing"
+};
+
+char string_Powerup_Normal[] = { //8
+    "Normal"
+};
+
+char* PowerupStrings[] = {
+    string_Powerup_Big,
+    string_Powerup_Speed_Up,
+    string_Powerup_Speed_Down,
+    string_Powerup_x2,
+    string_Powerup_x3,
+    string_Powerup_Invicible,
+    string_Powerup_Short_Tongue,
+    string_Powerup_Nothing,
+    string_Powerup_Normal
 };
 
 char* ONAndOFF[] = {
@@ -39,19 +102,27 @@ char* ONAndOFF[] = {
 
 char** page0Strings[] = {
     ONAndOFF, //Savestate Text Active text
+    ONAndOFF, //Savestate Text Active text
+    PowerupStrings,
 };
 
 menuPage page0 = {
-    1, //optionCount
+    3, //optionCount
     0, //pageIndex
     { //options
         "Display Speed",
+        "Display Position",
+        "PowerUp Lock",
     },
     { //menuProc
         &toggleDisplaySpeed,
+        &toggleDisplayPosition,
+        &togglePowerupLock,
     },
     { //flags
         TOGGLE_DISPLAY_SPEED,
+        TOGGLE_DISPLAY_POSITION,
+        TOGGLE_POWERUP_LOCK,
     },
 
     page0Strings,
@@ -63,7 +134,7 @@ menuPage* pageList[] = {
 
 s32 pageListTotal = ARRAY_COUNT(pageList);
 
-TextPosition MenuRoot = {20, 60};
+TextPosition MenuRoot = {20, 45};
 char menuOptionBuffer[100] = { 0 };  // Buffer for menu options text
 
 void updateMenuInput(void) {
@@ -130,11 +201,13 @@ void pageMainDisplay(s32 currPageNo, s32 currOptionNo) {
         //print option text
         printDebugText(menuOptionBuffer);
 
-        if (toggles[currPage->flags[i]] == 0) {
-            SetDefaultTextParametersWithColor(&RedOrange, menu.xPos + (strLength * X_COORD_PER_LETTER), menu.yPos);
-        } else {
-            SetDefaultTextParametersWithColor(&Green, menu.xPos + (strLength * X_COORD_PER_LETTER), menu.yPos);
-        }
+        // if (toggles[currPage->flags[i]] == 0) {
+        //     SetDefaultTextParametersWithColor(&RedOrange, menu.xPos + (strLength * X_COORD_PER_LETTER), menu.yPos);
+        // } else {
+        //     SetDefaultTextParametersWithColor(&Green, menu.xPos + (strLength * X_COORD_PER_LETTER), menu.yPos);
+        // }
+
+        SetDefaultTextParametersWithColor(&Green, menu.xPos + (strLength * X_COORD_PER_LETTER), menu.yPos);
 
         _bzero(&menuOptionBuffer, sizeof(menuOptionBuffer));
         _sprintf(menuOptionBuffer, currPage->selectionText[i][toggles[currPage->flags[i]]]);

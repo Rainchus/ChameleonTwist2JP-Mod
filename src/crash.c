@@ -80,16 +80,16 @@ const char* gFPCSRFaultCauses[6] = {
     "Inexact operation",
 };
 
-extern void crash_screen_sleep(s32 ms);
-// void crash_screen_sleep(s32 ms) {
-//     u64 cycles = ms * 1000LL * 46875000LL / 1000000ULL;
+// extern void crash_screen_sleep(s32 ms);
+void crash_screen_sleep(s32 ms) {
+    u64 cycles = ms * 1000LL * 46875000LL / 1000000ULL;
 
-//     osSetTime(0);
+    osSetTime(0);
 
-//     while (osGetTime() < cycles) {
-//         // wait
-//     }
-// }
+    while (osGetTime() < cycles) {
+        // wait
+    }
+}
 
 void crash_screen_draw_rect(s32 x, s32 y, s32 width, s32 height) {
     u16* ptr;

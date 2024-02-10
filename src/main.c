@@ -2,6 +2,8 @@
 #include <stdarg.h>
 
 extern Gfx Entity_YellowBlock_Render[];
+u32 savestateGameMode = -1;
+
 //80030AA0 texture entities
 
 //func_800D6050 prints debug stuff
@@ -43,7 +45,7 @@ typedef struct unkLookatStruct {
     f32 unk5C;
 } unkLookatStruct;
 
-extern s16 unkStep;
+extern s16 gGameMode;
 extern s16 debugFlag;
 void MainTimer(void);
 
@@ -160,10 +162,42 @@ u32 seedAtPowerupState = 0;
 u32 callsEnteringSkylandState = 0;
 u32 voidOutCallsState = 0;
 
+void crash_screen_sleep(s32 ms);
+
+void func_800CB430(void);
+
+typedef struct unk4 {
+    char unk_00[0x18];
+    s32 unk18;
+} unk4;
+
+void func_800CB630(void*);
+void func_800CBA4C(void*, void*, void*);
+void func_800CC270(void*, s32, s32);
+void func_800CD5D0(void*);
+extern u16 D_800EAE78;
+extern unk4 D_800F1C30;
+extern u32 D_800F1C54;
+extern u32 D_800F1C70;
+void func_800CB5C0(void);
+
+void func_800CB430_Hook(void) {
+    while (isSaveOrLoadActive == 1) {}
+    D_800F1C30.unk18 = (s32) D_800EAE78;
+    func_800CBA4C(0x8033E400, 0x51400, &D_800F1C30);
+    func_800CC270(&D_800F1C54, 0x8000, 0);
+    func_800CC270(&D_800F1C54, 0x8000, 1);
+    func_800CD5D0(&D_800F1C70);
+    func_800CB630(&func_800CB5C0);
+}
 
 void loadstateMain(void) {
     u32 mask;
     u32 savestateHeader = (*(u32*)ramAddrSavestateDataSlot1); //not really a header, but savestates always start with 0x4620610944222000
+    u32 curCount = osGetCount();
+    u64 count2;
+    u64 elapsedMillisecondsSavestate = 0;
+
     mask = __osDisableInt();
     //wait on rsp
     while (__osSpDeviceBusy() != 0) {}
@@ -178,14 +212,27 @@ void loadstateMain(void) {
     while (__osPiDeviceBusy() != 0) {}
 
     //invalidate caches
-    osInvalICache((void*)0x80000000, 0x4000);
+    //osInvalICache((void*)0x80000000, 0x4000);
 	osInvalDCache((void*)0x80000000, 0x2000);
     
     //instead of checking savestate size, check savestate header to see if it's valid
     //this will allow the user to load a savestate after crashing
     
     if (savestateHeader == 0x03E00008) {
+        while (1) {
+            count2 = osGetCount();
+            if (count2 < curCount) {
+                count2 += 0x100000000;
+            }
+            
+            elapsedMillisecondsSavestate = OS_CYCLES_TO_USEC(count2 - curCount);
+            if (elapsedMillisecondsSavestate > 500000) {
+                break;
+            }
+        }
         customMemCpy((void*)ramStartAddr, ramAddrSavestateDataSlot1, (u32)ramEndAddr - (u32)ramStartAddr);
+        //crash_screen_sleep(500); //sleep 500 ms
+        osInvalICache((void*)0x80000000, 0x4000);
     }
 
     osWritebackDCacheAll();
@@ -195,6 +242,10 @@ void loadstateMain(void) {
 
 void savestateMain(void) {
     u32 mask;
+    u32 curCount = osGetCount();
+    u64 count2;
+    u64 elapsedMillisecondsSavestate = 0;
+    
     mask = __osDisableInt();
 
     osWritebackDCacheAll();
@@ -214,34 +265,45 @@ void savestateMain(void) {
     //invalidate caches
     osInvalICache((void*)0x80000000, 0x4000);
     osInvalDCache((void*)0x80000000, 0x2000);
-
+    while (1) {
+        count2 = osGetCount();
+        if (count2 < curCount) {
+            count2 += 0x100000000;
+        }
+        
+        elapsedMillisecondsSavestate = OS_CYCLES_TO_USEC(count2 - curCount);
+        if (elapsedMillisecondsSavestate > 500000) {
+            break;
+        }
+        }
     customMemCpy((void*)ramAddrSavestateDataSlot1, (void*)ramStartAddr, ramEndAddr - ramStartAddr);
+    savestateGameMode = gGameMode;
     //savestate1Size = ramEndAddr - ramStartAddr;
 
     __osRestoreInt(mask);
     isSaveOrLoadActive = 0; //allow thread to continue
 }
 
-void checkInputsForSavestates(void) {
-    savestateCurrentSlot = 0;//set to 0
+// void checkInputsForSavestates(void) {
+//     savestateCurrentSlot = 0;//set to 0
 
-    if (unkStep == 3 || unkStep == 2 || unkStep == 0x12) { //in overworld/bootup/titlescreen
-        if (currentlyPressedButtons & L_JPAD) {
-            isSaveOrLoadActive = 1;
-            osCreateThread(&gCustomThread.thread, 255, (void*)savestateMain, NULL,
-                    gCustomThread.stack + sizeof(gCustomThread.stack), 255);
-            osStartThread(&gCustomThread.thread);
-            stateCooldown = 5;
-        } else if (currentlyPressedButtons & R_JPAD) {
-            isSaveOrLoadActive = 1;
-            osCreateThread(&gCustomThread.thread, 255, (void*)loadstateMain, NULL,
-                    gCustomThread.stack + sizeof(gCustomThread.stack), 255);
-            osStartThread(&gCustomThread.thread);
-            currentlyPressedButtons = 0;
-            stateCooldown = 5; 
-        }
-    }
-}
+//     if (gGameMode == 3 || gGameMode == 2 || gGameMode == 0x12) { //in overworld/bootup/titlescreen
+//         if (currentlyPressedButtons & L_JPAD) {
+//             isSaveOrLoadActive = 1;
+//             osCreateThread(&gCustomThread.thread, 255, (void*)savestateMain, NULL,
+//                     gCustomThread.stack + sizeof(gCustomThread.stack), 255);
+//             osStartThread(&gCustomThread.thread);
+//             stateCooldown = 5;
+//         } else if (currentlyPressedButtons & R_JPAD) {
+//             isSaveOrLoadActive = 1;
+//             osCreateThread(&gCustomThread.thread, 255, (void*)loadstateMain, NULL,
+//                     gCustomThread.stack + sizeof(gCustomThread.stack), 255);
+//             osStartThread(&gCustomThread.thread);
+//             currentlyPressedButtons = 0;
+//             stateCooldown = 5;
+//         }
+//     }
+// }
 
 extern u8 D_80160648;
 extern f32 D_80187B20; //is 0x20 into gPlayerActors[0]
@@ -249,7 +311,6 @@ extern s16 playerHealth;
 extern u8 D_800ECFD0[]; //array of characters for integers
 extern s32 D_800F6410; //?
 extern f32 D_800F6498;
-extern s32 D_80160808;
 void* crash_screen_copy_to_buf(void* dest, const char* src, u32 size);
 void setDebugTextPosition(s32 xPos, s32 yPos, s32 unk);
 void formatText(void* buffer, void* string);
@@ -280,7 +341,8 @@ u32 func_800E0790_Hook(void);
 
 void copyCallsToPowerupCalls(void);
 void printCustomText(void);
-
+void printCustomText2(void);
+void printCustomText3(void);
 s32 curStringPrintingIndex = 0;
 
 char* MenuStrings0[] = {
@@ -672,13 +734,20 @@ s32 currPageNo = 0;
 s32 currOptionNo = 0;
 s32 isMenuActive = 0;
 
+void PrintMenuDisplays(void) {
+    if (toggles[TOGGLE_DISPLAY_SPEED]) {
+        printCurrentSpeed();
+    }
+
+    if (toggles[TOGGLE_DISPLAY_POSITION]) {
+        PrintPosition();
+    }
+}
+
 void printCustomTextInC(void) {
 
     MainTimer();
-
-    if (toggles[TOGGLE_DISPLAY_SPEED] == 1) {
-        printCurrentSpeed();
-    }
+    PrintMenuDisplays();
 
     if (isMenuActive == 1) {
         updateMenuInput();
@@ -730,6 +799,89 @@ void osPiStartDmaHook(void);
 void osEPiStartDmaHook(void);
 void func_80035E00_Hook(unkLookatStruct* arg0);
 void hookAt800D5C54(void);
+
+void func_800293F0(s32);
+void func_800293F0_Hook(s32);
+void func_800293F0_Hook2(void);
+
+typedef struct Temp {
+    char unk_00[0x14];
+} Temp; //unk size
+
+void func_8003C9DC(void);
+s32 func_800D4DE0(s32);
+void func_800D6160(void);
+void func_800E8C00(void*, s32, s32);
+extern s16 D_800EAD5C;
+extern s16 D_800EAF60;
+extern s16 D_800EAF64;
+extern s16 D_800FF20E;
+extern Temp D_80160808;
+
+//load debug menu and set gamemode
+// void func_800293F0_Hook(s32 arg0) {
+//     D_800EAF60 = arg0;
+//     D_800EAF64 = 0;
+//     func_800E8C00(&D_80160808, 0, 0x10);
+//     func_8003C9DC();
+//     if (func_800D4DE0(0) == 0) {
+//         func_800D6160();
+//     }
+//     D_800EAD5C = 0;
+//     D_800FF20E = 0;
+
+//     if (stateCooldown == 0) {
+//         checkInputsForSavestates();
+//     }
+// }
+
+void func_800293F0_Hook2(void) {
+    if (stateCooldown != 0) {
+        return;
+    }
+
+    if (gGameMode == 0xC) { //is debug menu
+        return;
+    }
+
+    if (currentlyPressedButtons & L_JPAD) {
+        isSaveOrLoadActive = 1;
+        osCreateThread(&gCustomThread.thread, 255, (void*)savestateMain, NULL,
+                gCustomThread.stack + sizeof(gCustomThread.stack), 255);
+        osStartThread(&gCustomThread.thread);
+        stateCooldown = 5;
+    } else if (currentlyPressedButtons & R_JPAD) {
+        // D_800EAF60 = savestateGameMode; //set game mode
+        // D_800EAF64 = 0;
+        // func_800E8C00(&D_80160808, 0, 0x10);
+        // func_8003C9DC();
+        // // if (func_800D4DE0(0) == 0) {
+        // //     func_800D6160();
+        // // }
+        // D_800EAD5C = 0;
+        // D_800FF20E = 0;
+
+        isSaveOrLoadActive = 1;
+        osCreateThread(&gCustomThread.thread, 255, (void*)loadstateMain, NULL,
+                gCustomThread.stack + sizeof(gCustomThread.stack), 255);
+        osStartThread(&gCustomThread.thread);
+        currentlyPressedButtons = 0;
+        stateCooldown = 5;
+        while (isSaveOrLoadActive == 1) {}
+    }
+}
+
+void hookAt80029574(void);
+void hookAt80029758(void);
+void func_800BE480(void);
+void printCustomText4(void);
+void func_80029758_Hook(void) {
+    printCurrentSpeed();
+    func_800BE480(); //restore from hook
+}
+
+void hookAt800CBDC0(void);
+
 void cBootFunction(void) { //ran once on boot
     crash_screen_init();
     stateCooldown = 0;
@@ -738,7 +890,22 @@ void cBootFunction(void) { //ran once on boot
     isSaveOrLoadActive = 0;
     hookCode((void*)0x800E0790, &func_800E0790_Hook); //rng hook to track call total
     hookCode((void*)0x8004FBD0, &copyCallsToPowerupCalls); //when powerup is grabbed, copy calls to another var
-    hookCode((void*)0x800B3EA8, &printCustomText); //print our custom text when in game
+
+    //hookCode((void*)0x800B3EA8, &printCustomText); //print our custom text when in game
+    hookCode((void*)0x8002858C, &printCustomText2); //print our custom text when in game
+    //hookCode((void*)0x80028D3C, &printCustomText3); //print our custom text when in game
+    //hookCode((void*)0x80029D60, &printCustomText4); //print our custom text when in game
+
+    //hookCode((void*)0x800CBDC0, &hookAt800CBDC0);
+
+    //hookCode((void*)func_800293F0, func_800293F0_Hook);
+
+    hookCode((void*)0x800CB430, func_800CB430_Hook);
+
+    hookCode((void*)0x80029758, &hookAt80029758);
+
+    hookCode((void*)0x80029574, &hookAt80029574);
+    
     hookCode((void*)0x8004E3DC, &recordCallsAtVoidOut);
 
     hookCode((void*)0x80035E00, &func_80035E00_Hook);
@@ -768,28 +935,69 @@ void cBootFunction(void) { //ran once on boot
 }
 
 
+// enum PowerUpIDs {
+//     POWER_BIG = 0,
+//     POWER_SPEED_UP = 1,
+//     POWER_SPEED_DOWN = 2,
+//     POWER_X2 = 3,
+//     POWER_X3 = 4,
+//     POWER_INVICIBLE = 5,
+//     POWER_SHORT_TONGUE = 6,
+//     POWER_NOTHING = 7
+// };
+
+f32 alwaysBigPowerup[] = {
+    1.0f, 0, 0, 0,
+    0, 0, 0, 0
+};
+
+f32 alwaysSpeedUpPowerUp[] = {
+    0, 1.0f, 0, 0,
+    0, 0, 0, 0
+};
+
+f32 alwaysSpeedDownPowerUp[] = {
+    0, 0, 1.0f, 0,
+    0, 0, 0, 0
+};
+
+f32 always2XPowerUp[] = {
+    0, 0, 0, 1.0f,
+    0, 0, 0, 0
+};
+
+f32 always3XPowerUp[] = {
+    0, 0, 0, 0,
+    1.0f, 0, 0, 0
+};
+
+f32 alwaysInvinciblePowerUp[] = {
+    0, 0, 0, 0,
+    0, 1.0f, 0, 0
+};
+
+f32 alwaysShortTonguePowerUp[] = {
+    0, 0, 0, 0,
+    0, 0, 1.0f, 0
+};
+
+f32 alwaysNothingPowerUp[] = {
+    0, 0, 0, 0,
+    0, 0, 0, 1.0f
+};
+
 f32 randomPowerUps[] = {
     0.125f, 0.25f, 0.375f, 0.5f,
     0.625f, 0.75f, 0.875f, 1.0f
 };
 
-f32 alwaysSpeedPowerUps[] = {
-    0, 1.0f, 0, 0,
-    0, 0, 0, 0
-};
+// s32 image[] = {
+// 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x78009001, 0x90436000, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x78009801, 0xA0019043, 0x88017843, 0x70016800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x7800A843, 0xB843B043, 0xA043A001, 0x88438801, 0x70017843, 0x70016042, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x7000A843, 0xD043C843, 0xB843C043, 0xA843A843, 0x98019043, 0x80017801, 0x70017001, 0x70015800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58008800, 0xD043D043, 0xD843D043, 0xC043C843, 0xB843B843, 0xA8439801, 0x90438001, 0x80437001, 0x70017001, 0x68005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0xA043E043, 0xE043D843, 0xD843D843, 0xD843D043, 0xD043C843, 0xB843B043, 0x98019801, 0x80018043, 0x70017001, 0x70016843, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x5800B043, 0xF043E843, 0xE843E843, 0xE043E843, 0xD843E043, 0xE043D843, 0xC843C843, 0xB843A843, 0x98018843, 0x78017843, 0x70017001, 0x68015800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0xA001F843, 0xF843F043, 0xF043F043, 0xE843E843, 0xE843E843, 0xE843E843, 0xE043D043, 0xD043C043, 0xA843A001, 0x88438001, 0x70018043, 0x70016001, 0x60005800, 0x58005800, 0x58005800, 0x58008042, 0xF885F885, 0xF843F843, 0xF843F843, 0xF843F843, 0xF843F843, 0xF843F043, 0xF043E843, 0xE043D043, 0xC843B843, 0x98438801, 0x78437001, 0x70018043, 0x58005800, 0x58005800, 0x58005800, 0x5800E109, 0xF909F8C7, 0xF8C7F885, 0xF885F843, 0xF843F843, 0xF843F843, 0xF885F843, 0xF843F043, 0xF043E843, 0xD843C043, 0xB8439801, 0x90437801, 0x78017001, 0x70015800, 0x58005800, 0x58005800, 0x8884F98D, 0xF94BF94B, 0xF909F8C7, 0xF8C7F885, 0xF843F843, 0xF885F843, 0xF843F885, 0xF843F885, 0xF843F043, 0xE843E043, 0xC843A843, 0x98018843, 0x78017001, 0x80435800, 0x58005800, 0x58005800, 0xC14BFA11, 0xFA11F98D, 0xF98DF94B, 0xF909F885, 0xF885F843, 0xF843F843, 0xF843F843, 0xF843F843, 0xF843F843, 0xF043E843, 0xD043C043, 0xB0439001, 0x88017843, 0x70017001, 0x58005800, 0x58005800, 0xF253FA53, 0xFA53FA53, 0xF9CFF98D, 0xF94BF8C7, 0xF885F843, 0xF885F843, 0xF885F843, 0xF885F885, 0xF843F843, 0xF843F043, 0xE043D043, 0xB043A843, 0x90438801, 0x70017001, 0x58005800, 0x58005800, 0xFB19FB19, 0xFA95FA95, 0xFA53F9CF, 0xF94BF8C7, 0xF8C7F885, 0xF885F885, 0xF885F8C7, 0xF885F885, 0xF8C7F885, 0xF843F843, 0xE843D843, 0xC843A843, 0xA0018843, 0x88017843, 0x58005800, 0x58006842, 0xFB9DFB9D, 0xFB5BFB5B, 0xFA95FA53, 0xF9CFF98D, 0xF8C7F8C7, 0xF8C7F8C7, 0xF8C7F909, 0xF909F909, 0xF909F8C7, 0xF8C7F885, 0xF843E843, 0xD043C043, 0xA843A001, 0x88438801, 0x58005800, 0x58005800, 0xFBDFFBDF, 0xFC63FC63, 0xFB9DFAD7, 0xFA53F9CF, 0xF94BF94B, 0xF94BF94B, 0xF94BF94B, 0xF98DF98D, 0xF98DF98D, 0xF94BF94B, 0xF885F043, 0xE043D043, 0xB043B043, 0x98018801, 0x58005800, 0x58005800, 0xF3DFFD29, 0xFDEFFDEF, 0xFCE7FBDF, 0xFAD7FA11, 0xF9CFF98D, 0xF98DF98D, 0xF9CFF9CF, 0xFA11FA11, 0xFA11FA11, 0xF9CFF9CF, 0xF94BF885, 0xF043D843, 0xC843B043, 0xB0439843, 0x58005800, 0x58005800, 0xCB19FDEF, 0xFFBDFFBD, 0xFE31FC63, 0xFB19FAD7, 0xFA11FA11, 0xF9CFFA53, 0xFA11FA11, 0xFAD7FA95, 0xFB19FB19, 0xFAD7FA53, 0xF9CFF909, 0xF843E843, 0xD843C843, 0xB0439001, 0x58005800, 0x58005800, 0x99CEFDEF, 0xFFBDFFBD, 0xFE73FCA5, 0xFBDFFAD7, 0xFA53FA53, 0xFA53FA11, 0xFA95FA95, 0xFAD7FB19, 0xFC21FC63, 0xFC21FB19, 0xFA53F94B, 0xF885F043, 0xE043D043, 0xC8436800, 0x58005800, 0x58005800, 0x6884D463, 0xFDEFFE73, 0xFD6BFC63, 0xFB9DFB5B, 0xFA95FA53, 0xFA53FAD7, 0xFA95FB19, 0xFB19FB9D, 0xFCE7FD6B, 0xFD29FB9D, 0xFAD7F9CF, 0xF8C7F843, 0xF043D843, 0xB0435800, 0x58005800, 0x58005800, 0x580078C6, 0xF4A5FD29, 0xFCE7FC21, 0xFBDFFB19, 0xFAD7FA95, 0xFA95FA95, 0xF29588C6, 0x894AF35B, 0xFCE7FE31, 0xFDEFFB9D, 0xFB19FA11, 0xF94BF8C7, 0xF843D843, 0x60006000, 0x58005800, 0x58005800, 0x58005800, 0x6884CB5B, 0xFCA5FC21, 0xFBDFFB5B, 0xFAD7FAD7, 0xFA95B14B, 0x60426000, 0x58007084, 0xBA95FC63, 0xFC63FB9D, 0xFAD7FA53, 0xF9CFF909, 0xD0436800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x8108B211, 0xCA95CA11, 0xA14B88C6, 0x58005800, 0x58005800, 0x58005800, 0x684270C6, 0x914AA18D, 0xCA53C98D, 0xB1098042, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800
+// };
 
-f32 always3XPowerUps[] = {
-    0, 0, 0, 0,
-    1.0f, 0, 0, 0
-};
-
-s32 image[] = {
-0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x78009001, 0x90436000, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x78009801, 0xA0019043, 0x88017843, 0x70016800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x7800A843, 0xB843B043, 0xA043A001, 0x88438801, 0x70017843, 0x70016042, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x7000A843, 0xD043C843, 0xB843C043, 0xA843A843, 0x98019043, 0x80017801, 0x70017001, 0x70015800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58008800, 0xD043D043, 0xD843D043, 0xC043C843, 0xB843B843, 0xA8439801, 0x90438001, 0x80437001, 0x70017001, 0x68005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0xA043E043, 0xE043D843, 0xD843D843, 0xD843D043, 0xD043C843, 0xB843B043, 0x98019801, 0x80018043, 0x70017001, 0x70016843, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x5800B043, 0xF043E843, 0xE843E843, 0xE043E843, 0xD843E043, 0xE043D843, 0xC843C843, 0xB843A843, 0x98018843, 0x78017843, 0x70017001, 0x68015800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0xA001F843, 0xF843F043, 0xF043F043, 0xE843E843, 0xE843E843, 0xE843E843, 0xE043D043, 0xD043C043, 0xA843A001, 0x88438001, 0x70018043, 0x70016001, 0x60005800, 0x58005800, 0x58005800, 0x58008042, 0xF885F885, 0xF843F843, 0xF843F843, 0xF843F843, 0xF843F843, 0xF843F043, 0xF043E843, 0xE043D043, 0xC843B843, 0x98438801, 0x78437001, 0x70018043, 0x58005800, 0x58005800, 0x58005800, 0x5800E109, 0xF909F8C7, 0xF8C7F885, 0xF885F843, 0xF843F843, 0xF843F843, 0xF885F843, 0xF843F043, 0xF043E843, 0xD843C043, 0xB8439801, 0x90437801, 0x78017001, 0x70015800, 0x58005800, 0x58005800, 0x8884F98D, 0xF94BF94B, 0xF909F8C7, 0xF8C7F885, 0xF843F843, 0xF885F843, 0xF843F885, 0xF843F885, 0xF843F043, 0xE843E043, 0xC843A843, 0x98018843, 0x78017001, 0x80435800, 0x58005800, 0x58005800, 0xC14BFA11, 0xFA11F98D, 0xF98DF94B, 0xF909F885, 0xF885F843, 0xF843F843, 0xF843F843, 0xF843F843, 0xF843F843, 0xF043E843, 0xD043C043, 0xB0439001, 0x88017843, 0x70017001, 0x58005800, 0x58005800, 0xF253FA53, 0xFA53FA53, 0xF9CFF98D, 0xF94BF8C7, 0xF885F843, 0xF885F843, 0xF885F843, 0xF885F885, 0xF843F843, 0xF843F043, 0xE043D043, 0xB043A843, 0x90438801, 0x70017001, 0x58005800, 0x58005800, 0xFB19FB19, 0xFA95FA95, 0xFA53F9CF, 0xF94BF8C7, 0xF8C7F885, 0xF885F885, 0xF885F8C7, 0xF885F885, 0xF8C7F885, 0xF843F843, 0xE843D843, 0xC843A843, 0xA0018843, 0x88017843, 0x58005800, 0x58006842, 0xFB9DFB9D, 0xFB5BFB5B, 0xFA95FA53, 0xF9CFF98D, 0xF8C7F8C7, 0xF8C7F8C7, 0xF8C7F909, 0xF909F909, 0xF909F8C7, 0xF8C7F885, 0xF843E843, 0xD043C043, 0xA843A001, 0x88438801, 0x58005800, 0x58005800, 0xFBDFFBDF, 0xFC63FC63, 0xFB9DFAD7, 0xFA53F9CF, 0xF94BF94B, 0xF94BF94B, 0xF94BF94B, 0xF98DF98D, 0xF98DF98D, 0xF94BF94B, 0xF885F043, 0xE043D043, 0xB043B043, 0x98018801, 0x58005800, 0x58005800, 0xF3DFFD29, 0xFDEFFDEF, 0xFCE7FBDF, 0xFAD7FA11, 0xF9CFF98D, 0xF98DF98D, 0xF9CFF9CF, 0xFA11FA11, 0xFA11FA11, 0xF9CFF9CF, 0xF94BF885, 0xF043D843, 0xC843B043, 0xB0439843, 0x58005800, 0x58005800, 0xCB19FDEF, 0xFFBDFFBD, 0xFE31FC63, 0xFB19FAD7, 0xFA11FA11, 0xF9CFFA53, 0xFA11FA11, 0xFAD7FA95, 0xFB19FB19, 0xFAD7FA53, 0xF9CFF909, 0xF843E843, 0xD843C843, 0xB0439001, 0x58005800, 0x58005800, 0x99CEFDEF, 0xFFBDFFBD, 0xFE73FCA5, 0xFBDFFAD7, 0xFA53FA53, 0xFA53FA11, 0xFA95FA95, 0xFAD7FB19, 0xFC21FC63, 0xFC21FB19, 0xFA53F94B, 0xF885F043, 0xE043D043, 0xC8436800, 0x58005800, 0x58005800, 0x6884D463, 0xFDEFFE73, 0xFD6BFC63, 0xFB9DFB5B, 0xFA95FA53, 0xFA53FAD7, 0xFA95FB19, 0xFB19FB9D, 0xFCE7FD6B, 0xFD29FB9D, 0xFAD7F9CF, 0xF8C7F843, 0xF043D843, 0xB0435800, 0x58005800, 0x58005800, 0x580078C6, 0xF4A5FD29, 0xFCE7FC21, 0xFBDFFB19, 0xFAD7FA95, 0xFA95FA95, 0xF29588C6, 0x894AF35B, 0xFCE7FE31, 0xFDEFFB9D, 0xFB19FA11, 0xF94BF8C7, 0xF843D843, 0x60006000, 0x58005800, 0x58005800, 0x58005800, 0x6884CB5B, 0xFCA5FC21, 0xFBDFFB5B, 0xFAD7FAD7, 0xFA95B14B, 0x60426000, 0x58007084, 0xBA95FC63, 0xFC63FB9D, 0xFAD7FA53, 0xF9CFF909, 0xD0436800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x8108B211, 0xCA95CA11, 0xA14B88C6, 0x58005800, 0x58005800, 0x58005800, 0x684270C6, 0x914AA18D, 0xCA53C98D, 0xB1098042, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800, 0x58005800
-};
-
-s32 pal[] = {
-    0x294AFD29, 0xF9C1C9C1, 0xB8C10001, 0xB8016801
-};
+// s32 pal[] = {
+//     0x294AFD29, 0xF9C1C9C1, 0xB8C10001, 0xB8016801
+// };
 
 void func_8002616C(void);
 
@@ -866,18 +1074,18 @@ void perFrameCFunction(void) {
         D_80187B20 = 32.0f;
     }
     
-    if (stateCooldown == 0) {
-        checkInputsForSavestates();
-    }
+    // if (stateCooldown == 0) {
+    //     checkInputsForSavestates();
+    // }
 
-    if (unkStep == 3) {
-        if (currentlyHeldButtons & R_TRIG && currentlyPressedButtons & D_JPAD) {
-            curPowerupLock++;
-            if (curPowerupLock >= 3) { //if advanced to 3, reset to 0
-                curPowerupLock = 0;
-            }
-        }
-    }
+    // if (gGameMode == 3) {
+    //     if (currentlyHeldButtons & R_TRIG && currentlyPressedButtons & D_JPAD) {
+    //         curPowerupLock++;
+    //         if (curPowerupLock >= 3) { //if advanced to 3, reset to 0
+    //             curPowerupLock = 0;
+    //         }
+    //     }
+    // }
 
     //R + dpad down toggles menu
     if (currentlyHeldButtons & R_TRIG && currentlyPressedButtons & CONT_DOWN) {
@@ -888,18 +1096,52 @@ void perFrameCFunction(void) {
     // if (!(currentlyHeldButtons & R_TRIG) && currentlyPressedButtons & D_JPAD) {
     //     printPositionBool ^= 1;
     // }
-
-    switch (curPowerupLock) {
-        case RANDOM:
+    // POWER_X2 = 3,
+    // POWER_X3 = 4,
+    // POWER_INVICIBLE = 5,
+    // POWER_SHORT_TONGUE = 6,
+    // POWER_NOTHING = 7
+    switch (toggles[TOGGLE_POWERUP_LOCK]) {
+        case POWER_BIG:
+            memcpy(powerUpFloatArray, alwaysBigPowerup, sizeof(powerUpFloatArray));
+            break;
+        case POWER_SPEED_UP:
+            memcpy(powerUpFloatArray, alwaysSpeedUpPowerUp, sizeof(powerUpFloatArray));
+            break;
+        case POWER_SPEED_DOWN:
+            memcpy(powerUpFloatArray, alwaysSpeedDownPowerUp, sizeof(powerUpFloatArray));
+            break;
+        case POWER_X2:
+            memcpy(powerUpFloatArray, always2XPowerUp, sizeof(powerUpFloatArray));
+            break;
+        case POWER_X3:
+            memcpy(powerUpFloatArray, always3XPowerUp, sizeof(powerUpFloatArray));
+            break;
+        case POWER_INVICIBLE:
+            memcpy(powerUpFloatArray, alwaysInvinciblePowerUp, sizeof(powerUpFloatArray));
+            break;
+        case POWER_SHORT_TONGUE:
+            memcpy(powerUpFloatArray, alwaysShortTonguePowerUp, sizeof(powerUpFloatArray));
+            break;
+        case POWER_NOTHING:
+            memcpy(powerUpFloatArray, alwaysNothingPowerUp, sizeof(powerUpFloatArray));
+            break;
+        default:
             memcpy(powerUpFloatArray, randomPowerUps, sizeof(powerUpFloatArray));
             break;
-        case SPEED:
-            memcpy(powerUpFloatArray, alwaysSpeedPowerUps, sizeof(powerUpFloatArray));
-            break;
-        case X3:
-            memcpy(powerUpFloatArray, always3XPowerUps, sizeof(powerUpFloatArray));
-            break;
     }
+
+    // switch (curPowerupLock) {
+    //     case RANDOM:
+    //         memcpy(powerUpFloatArray, randomPowerUps, sizeof(powerUpFloatArray));
+    //         break;
+    //     case SPEED:
+    //         memcpy(powerUpFloatArray, alwaysSpeedPowerUps, sizeof(powerUpFloatArray));
+    //         break;
+    //     case X3:
+    //         memcpy(powerUpFloatArray, always3XPowerUps, sizeof(powerUpFloatArray));
+    //         break;
+    // }
 
     if (stateCooldown > 0) {
         stateCooldown--;
@@ -917,7 +1159,7 @@ void func_80035E00_Hook(unkLookatStruct* arg0) { //renders the world
     f32 var_f0;
 
     var_f0 = 50.0f;
-    if ((unkStep == 0xF) || (unkStep == 0x10)) {
+    if ((gGameMode == 0xF) || (gGameMode == 0x10)) {
         var_f0 = 40.0f;
     }
     guPerspective(MatrixBuffer, &sp56, 60.0f, 1.3333334f, var_f0, D_800F57BC, 1.0f);

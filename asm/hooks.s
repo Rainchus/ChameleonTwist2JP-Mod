@@ -39,6 +39,41 @@ LW ra, 0x0018 (sp)
 JR RA
 addiu sp, sp, 0x20
 
+printCustomText2:
+ADDIU sp, sp, -0x18 //restore from hook
+SW a0, 0x0018 (sp) //restore from hook
+
+addiu sp, sp, -0x20
+SW ra, 0x0018 (sp)
+SW ra, 0x0014 (sp)
+
+JAL printCustomTextInC
+NOP
+LW ra, 0x0018 (sp)
+J 0x80028594
+addiu sp, sp, 0x20
+
+printCustomText3:
+JAL printCustomTextInC
+NOP
+JAL	0x80029C44
+NOP
+J 0x80028D44
+NOP
+
+printCustomText4:
+//JAL printCustomTextInC
+//NOP
+//JAL PrintMenuDisplays
+//NOP
+LUI t3, 0x800F
+J 0x80029D68
+LH t3, 0xAEEC (t3)
+
+
+
+
+
 recordCallsAtVoidOut:
 LI t0, voidOutCalls
 LI t1, calls
@@ -176,6 +211,9 @@ LI a0, isSaveOrLoadActive
 LW a1, 0x0000 (a0)
 BNEZ a1, hookAt800CBDC0
 NOP
+//LI a0, isOtherThreadActive
+//ORI a1, r0, 1
+//SW a1, 0x0000 (a0) //prevent savestate thread from running
 LUI a0, 0x801A
 ADDIU a0, a0, 0xCEB0
 J 0x800CBDC8
@@ -202,6 +240,12 @@ NOP
 JAL 0x800E3A00
 OR a0, s0, r0
 J 0x800D76E0
+NOP
+
+hookAt80029758:
+JAL func_80029758_Hook
+NOP
+J 0x80029760
 NOP
 
 osPiStartDmaHook:
@@ -291,6 +335,14 @@ stuff:
 JAL SetTimerStuff
 NOP
 J 0x800293B8
+NOP
+
+hookAt80029574:
+JAL 0x8003CBAC
+NOP
+JAL func_800293F0_Hook2
+NOP
+J 0x8002957C
 NOP
 
 

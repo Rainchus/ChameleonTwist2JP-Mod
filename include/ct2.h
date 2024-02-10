@@ -219,7 +219,20 @@ extern u16 currentlyHeldButtons;
 enum Toggles {
     NO_TOGGLE = 0,
     //page 0
-    TOGGLE_DISPLAY_SPEED
+    TOGGLE_DISPLAY_SPEED,
+    TOGGLE_DISPLAY_POSITION,
+    TOGGLE_POWERUP_LOCK,
+};
+
+enum PowerUpIDs {
+    POWER_BIG = 0,
+    POWER_SPEED_UP = 1,
+    POWER_SPEED_DOWN = 2,
+    POWER_X2 = 3,
+    POWER_X3 = 4,
+    POWER_INVICIBLE = 5,
+    POWER_SHORT_TONGUE = 6,
+    POWER_NOTHING = 7
 };
 
 extern s32 currPageNo;

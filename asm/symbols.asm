@@ -109,7 +109,7 @@
 .definelabel textStyle, 0x80185796
 .definelabel _bzero, 0x800DA130
 .definelabel respawnZone, 0x800EAE00
-.definelabel unkStep, 0x800EAF60
+.definelabel gGameMode, 0x800EAF60
 .definelabel debugFlag, 0x800EAE64
 .definelabel textRed, 0x801857A8
 .definelabel textBlue, 0x801857AA
@@ -135,6 +135,27 @@
 .definelabel bossHpBar, 0x8016063C
 .definelabel osGetCount, 0x800DF550
 .definelabel _strlen, 0x800E16FC
+.definelabel D_800EAF60, 0x800EAF60
+.definelabel D_800EAF64, 0x800EAF64
+.definelabel func_800E8C00, 0x800E8C00
+.definelabel func_8003C9DC, 0x8003C9DC
+.definelabel func_800D4DE0, 0x800D4DE0
+.definelabel D_800EAD5C, 0x800EAD5C
+.definelabel D_800FF20E, 0x800FF20E
+.definelabel func_800D6160, 0x800D6160
+.definelabel func_800293F0, 0x800293F0
+.definelabel func_800BE480, 0x800BE480
+
+.definelabel func_800CB630, 0x800CB630;
+.definelabel func_800CBA4C, 0x800CBA4C;
+.definelabel func_800CC270, 0x800CC270;
+.definelabel func_800CD5D0, 0x800CD5D0;
+.definelabel D_800EAE78, 0x800EAE78;
+.definelabel D_800F1C30, 0x800F1C30;
+.definelabel D_800F1C54, 0x800F1C54;
+.definelabel D_800F1C70, 0x800F1C70;
+.definelabel func_800CB5C0, 0x800cb5c0;
+
 //mainThread 8001C81C
 
 .headersize 0x80024C00
