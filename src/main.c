@@ -265,27 +265,6 @@ void savestateMain(void) {
     isSaveOrLoadActive = 0; //allow thread to continue
 }
 
-// void checkInputsForSavestates(void) {
-//     savestateCurrentSlot = 0;//set to 0
-
-//     if (gGameMode == 3 || gGameMode == 2 || gGameMode == 0x12) { //in overworld/bootup/titlescreen
-//         if (currentlyPressedButtons & L_JPAD) {
-//             isSaveOrLoadActive = 1;
-//             osCreateThread(&gCustomThread.thread, 255, (void*)savestateMain, NULL,
-//                     gCustomThread.stack + sizeof(gCustomThread.stack), 255);
-//             osStartThread(&gCustomThread.thread);
-//             stateCooldown = 5;
-//         } else if (currentlyPressedButtons & R_JPAD) {
-//             isSaveOrLoadActive = 1;
-//             osCreateThread(&gCustomThread.thread, 255, (void*)loadstateMain, NULL,
-//                     gCustomThread.stack + sizeof(gCustomThread.stack), 255);
-//             osStartThread(&gCustomThread.thread);
-//             currentlyPressedButtons = 0;
-//             stateCooldown = 5;
-//         }
-//     }
-// }
-
 extern u8 D_80160648;
 extern f32 D_80187B20; //is 0x20 into gPlayerActors[0]
 extern s16 playerHealth;

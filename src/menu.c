@@ -240,13 +240,13 @@ void updateMenuInput(void) {
             currOptionNo = 0; //wrap menu
         }
     }
-    else if (currentlyPressedButtons & CONT_LEFT) {
+    else if (currentlyPressedButtons & CONT_LEFT && !(currentlyHeldButtons & R_TRIG) && !(currentlyHeldButtons & L_TRIG)) {
         if (currPageNo > 0) {
             currPageNo--;
             currOptionNo = 0;
         }
     }
-    else if (currentlyPressedButtons & CONT_RIGHT) {
+   else if (currentlyPressedButtons & CONT_RIGHT && !(currentlyHeldButtons & R_TRIG) && !(currentlyHeldButtons & L_TRIG)) {
         if (currPageNo < pageListTotal - 1) {
             currPageNo++;
             currOptionNo = 0;
