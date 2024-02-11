@@ -68,7 +68,7 @@ char* CarnivalLandArea1[] = {
     "Before Ferris Wheel", //zone 3
     "Ferris Wheel Platform", //zone 4
     "Ferris Wheel 1", //zone 5
-    "Ferris Wheel 2" //zone 6
+    "Ferris Wheel 2", //zone 6
     "Ferris Wheel 3", //zone 7
     "Before Maze", //zone 8
     "Maze", //zone 9
