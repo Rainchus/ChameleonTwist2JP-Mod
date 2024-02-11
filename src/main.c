@@ -7,7 +7,10 @@ void print_lag_frames(s32 x, s32 y, TextColor* color);
 
 s32 menuCurRespawnZone = 1;
 s32 zoneLockout = 0;
-
+u32 lag_frames = 0;
+u32 frame_count = 0;
+u8 curFrameTimeIndex = 0;
+extern u32 __osVIIntrCount;
 //80030AA0 texture entities
 
 //func_800D6050 prints debug stuff
@@ -19,7 +22,6 @@ s32 zoneLockout = 0;
 s32 p1AirborneFrames = 0;
 s32 holdDpadDirectionFrames = 0;
 s32 prevOption = 0;
-s32 infiniteHealthBool = 0;
 s32 pulledParasolTimer = 0;
 s32 parasolPullFrame = 0;
 f32 parasolPullSpeed = 0.0f;
@@ -499,20 +501,12 @@ void DisplayDebugMenu(void) {
         MenuInstancePointer->stageIndex = prevOption;
     }
 
-    if ((currentlyHeldButtons & R_TRIG) && (currentlyPressedButtons & R_JPAD)) {
-        infiniteHealthBool ^=1;
-    }
-
     textStyle = 1;
     textKerning = 1;
-
     _bzero(buffer, sizeof(buffer));
     setDebugTextPosition(MenuTextPositions[0].xPos, MenuTextPositions[0].yPos - 15, 0x50);
     SetTextWidthAndHeight(0.6f, 0.6f);
     SetTextColor2(255, 255, 255, 255);
-
-    _sprintf(buffer, "Inf Hp: %s", OffOrOnString[infiniteHealthBool]);
-    printDebugText(buffer);
 
 
     if (MenuInstancePointer->cursor == 0) {
@@ -714,6 +708,11 @@ s32 currOptionNo = 0;
 s32 isMenuActive = 0;
 
 void PrintMenuDisplays(void) {
+    //dpad down resets lag counter
+    if (!(currentlyHeldButtons & R_TRIG) && currentlyPressedButtons & D_JPAD) {
+        frame_count = __osVIIntrCount / 2; //reset lag counter
+    }
+
     if (toggles[TOGGLE_DISPLAY_SPEED]) {
         printCurrentSpeed();
     }
@@ -888,11 +887,6 @@ void printCustomText4(void);
 #define	OS_CPU_COUNTER		(OS_CLOCK_RATE*3/4)
 
 OSTime frameTimes[FRAMETIME_COUNT] = {0};
-u8 curFrameTimeIndex = 0;
-u32 lag_frames = 0;
-
-extern u32 __osVIIntrCount;
-u32 frame_count = 0;
 
 void cCompareVICount(void) {
     lag_frames = (__osVIIntrCount / 2) - frame_count; //if 0, no lag occurred
@@ -1178,8 +1172,6 @@ void LimitZone(void) {
 }
 
 void perFrameCFunction(void) {
-    //gSP1Triangle(Gfx *gdl, s32 v0, s32 v1, s32 v2, s32 flag)
-
     cCompareVICount(); //used for calculating lag frames
     
     debugFlag = 1;
@@ -1209,47 +1201,19 @@ void perFrameCFunction(void) {
         LimitZone();
     }
 
-    
-
-    if (infiniteHealthBool == 1) {
+    if (toggles[TOGGLE_INF_HEALTH]) {
         playerHealth = 10;
     }
     
-    if (currentlyHeldButtons & L_TRIG) {
+    if (currentlyHeldButtons & L_TRIG && isMenuActive == 0) {
         D_80187B20 = 32.0f;
     }
-    
-    // if (stateCooldown == 0) {
-    //     checkInputsForSavestates();
-    // }
-
-    // if (gGameMode == 3) {
-    //     if (currentlyHeldButtons & R_TRIG && currentlyPressedButtons & D_JPAD) {
-    //         curPowerupLock++;
-    //         if (curPowerupLock >= 3) { //if advanced to 3, reset to 0
-    //             curPowerupLock = 0;
-    //         }
-    //     }
-    // }
 
     //R + dpad down toggles menu
     if (currentlyHeldButtons & R_TRIG && currentlyPressedButtons & CONT_DOWN) {
         isMenuActive ^= 1;
     }
 
-    if (!(currentlyHeldButtons & R_TRIG) && currentlyPressedButtons & D_JPAD) {
-        lag_frames = 0;
-    }
-
-    //dpad down only, toggle XYZ display
-    // if (!(currentlyHeldButtons & R_TRIG) && currentlyPressedButtons & D_JPAD) {
-    //     printPositionBool ^= 1;
-    // }
-    // POWER_X2 = 3,
-    // POWER_X3 = 4,
-    // POWER_INVICIBLE = 5,
-    // POWER_SHORT_TONGUE = 6,
-    // POWER_NOTHING = 7
     switch (toggles[TOGGLE_POWERUP_LOCK]) {
         case POWER_BIG:
             memcpy(powerUpFloatArray, alwaysBigPowerup, sizeof(powerUpFloatArray));
@@ -1279,18 +1243,6 @@ void perFrameCFunction(void) {
             memcpy(powerUpFloatArray, randomPowerUps, sizeof(powerUpFloatArray));
             break;
     }
-
-    // switch (curPowerupLock) {
-    //     case RANDOM:
-    //         memcpy(powerUpFloatArray, randomPowerUps, sizeof(powerUpFloatArray));
-    //         break;
-    //     case SPEED:
-    //         memcpy(powerUpFloatArray, alwaysSpeedPowerUps, sizeof(powerUpFloatArray));
-    //         break;
-    //     case X3:
-    //         memcpy(powerUpFloatArray, always3XPowerUps, sizeof(powerUpFloatArray));
-    //         break;
-    // }
 
     if (stateCooldown > 0) {
         stateCooldown--;

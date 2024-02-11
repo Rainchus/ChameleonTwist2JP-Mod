@@ -13,6 +13,7 @@ s8 toggles[] = {
     0, // TOGGLE_DISPLAY_FPS
     0, // TOGGLE_DISPLAY_LAG_FRAMES
     1, // TOGGLE_DISPLAY_ZONE
+    0, // TOGGLE_INF_HEALTH
 };
 
 typedef struct menuPage {
@@ -49,6 +50,11 @@ s32 toggleFpsDisplay(void) {
 
 s32 toggleLagFramesDisplay(void) {
     toggles[TOGGLE_DISPLAY_LAG_FRAMES] ^= 1;
+    return 1;
+}
+
+s32 toggleInfHealth(void) {
+    toggles[TOGGLE_INF_HEALTH] ^= 1;
     return 1;
 }
 
@@ -137,6 +143,7 @@ char** page0Strings[] = {
 char** page1Strings[] = {
     ONAndOFF,
     ONAndOFF,
+    ONAndOFF,
     ONAndOFF
 };
 
@@ -167,22 +174,25 @@ menuPage page0 = {
 };
 
 menuPage page1 = {
-    3, //optionCount
+    4, //optionCount
     1, //pageIndex
     { //options
-        "Display Fps",
-        "Display Lag Frames",
-        "Display Zone"
+        "Fps",
+        "Lag Frames",
+        "Show Zone",
+        "Inf Health"
     },
     { //menuProc
         &toggleFpsDisplay,
         &toggleLagFramesDisplay,
-        &toggleZoneDisplay
+        &toggleZoneDisplay,
+        &toggleInfHealth
     },
     { //flags
         TOGGLE_DISPLAY_FPS,
         TOGGLE_DISPLAY_LAG_FRAMES,
-        TOGGLE_DISPLAY_ZONE
+        TOGGLE_DISPLAY_ZONE,
+        TOGGLE_INF_HEALTH
     },
 
     page1Strings,
