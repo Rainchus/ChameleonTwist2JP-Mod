@@ -14,5 +14,6 @@
 .importobj "obj/threads.o"
 .importobj "obj/timer.o"
 .importobj "obj/yellow_block.o"
+.importobj "obj/zones.o"
 .include "asm/hooks.s"
 .close //close file

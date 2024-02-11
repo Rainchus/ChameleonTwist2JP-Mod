@@ -30,15 +30,6 @@ SRL v0, a1, 2
 JR RA
 SW v0, 0x3FF0 (at)
 
-printCustomText:
-addiu sp, sp, -0x20
-sw ra, 0x0018 (sp)
-JAL printCustomTextInC
-NOP
-LW ra, 0x0018 (sp)
-JR RA
-addiu sp, sp, 0x20
-
 printCustomText2:
 ADDIU sp, sp, -0x18 //restore from hook
 SW a0, 0x0018 (sp) //restore from hook
@@ -54,12 +45,16 @@ J 0x80028594
 addiu sp, sp, 0x20
 
 printCustomText3:
+ADDIU sp, sp, -0x20
+SW ra, 0x0014 (sp)
+
 JAL printCustomTextInC
 NOP
-JAL	0x80029C44
-NOP
-J 0x80028D44
-NOP
+
+LW ra, 0x0014 (sp)
+JR RA
+addiu sp, sp, 0x20
+
 
 printCustomText4:
 //JAL printCustomTextInC
@@ -242,12 +237,6 @@ OR a0, s0, r0
 J 0x800D76E0
 NOP
 
-hookAt80029758:
-JAL func_80029758_Hook
-NOP
-J 0x80029760
-NOP
-
 osPiStartDmaHook:
 // at 800DF584
 SW s0, 0x0014 (sp)
@@ -344,6 +333,22 @@ JAL func_800293F0_Hook2
 NOP
 J 0x8002957C
 NOP
+
+zoneSetCheck:
+LI t5, zoneLockout
+LW t6, 0x0000 (t5)
+BNEZ t6, skipGameZoneWrite
+NOP
+SH s3, 0xAE00 (at)
+skipGameZoneWrite:
+ADDIU t6, t6, -1
+BLTZ t6, skipWrite
+NOP
+SW t6, 0x0000 (t5) //remove zone lockout
+skipWrite:
+J 0x80055124
+NOP
+
 
 
 .headersize 0x802032D4 - 0x20B844

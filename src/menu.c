@@ -9,7 +9,10 @@ s8 toggles[] = {
     //page 0
     1,  // TOGGLE_HIDE_SAVESTATE_TEXT
     0, // TOGGLE_DISPLAY_POSITION
-    8, //TOGGLE_POWERUP_LOCK 
+    8, // TOGGLE_POWERUP_LOCK 
+    0, // TOGGLE_DISPLAY_FPS
+    0, // TOGGLE_DISPLAY_LAG_FRAMES
+    1, // TOGGLE_DISPLAY_ZONE
 };
 
 typedef struct menuPage {
@@ -36,6 +39,31 @@ s32 togglePowerupLock(void) {
     if (toggles[TOGGLE_POWERUP_LOCK] > 8) {
         toggles[TOGGLE_POWERUP_LOCK] = 0;
     }
+    return 1;
+}
+
+s32 toggleFpsDisplay(void) {
+    toggles[TOGGLE_DISPLAY_FPS] ^= 1;
+    return 1;
+}
+
+s32 toggleLagFramesDisplay(void) {
+    toggles[TOGGLE_DISPLAY_LAG_FRAMES] ^= 1;
+    return 1;
+}
+
+s32 toggleZoneDisplay(void) {
+    toggles[TOGGLE_DISPLAY_ZONE]++;
+    return 1;
+}
+
+extern s32 menuCurRespawnZone;
+extern s32 zoneLockout;
+
+s32 ZoneWarp(void) {
+    respawnZone = menuCurRespawnZone;
+    zoneLockout = 4;
+    gPlayerActors[0].pos.y = -10000.0f;
     return 1;
 }
 
@@ -101,9 +129,19 @@ char* ONAndOFF[] = {
 };
 
 char** page0Strings[] = {
-    ONAndOFF, //Savestate Text Active text
-    ONAndOFF, //Savestate Text Active text
-    PowerupStrings,
+    ONAndOFF, //Display speed
+    ONAndOFF, //Display position
+    PowerupStrings, //
+};
+
+char** page1Strings[] = {
+    ONAndOFF,
+    ONAndOFF,
+    ONAndOFF
+};
+
+char** page2Strings[] = {
+    ONAndOFF,
 };
 
 menuPage page0 = {
@@ -128,8 +166,48 @@ menuPage page0 = {
     page0Strings,
 };
 
+menuPage page1 = {
+    3, //optionCount
+    1, //pageIndex
+    { //options
+        "Display Fps",
+        "Display Lag Frames",
+        "Display Zone"
+    },
+    { //menuProc
+        &toggleFpsDisplay,
+        &toggleLagFramesDisplay,
+        &toggleZoneDisplay
+    },
+    { //flags
+        TOGGLE_DISPLAY_FPS,
+        TOGGLE_DISPLAY_LAG_FRAMES,
+        TOGGLE_DISPLAY_ZONE
+    },
+
+    page1Strings,
+};
+
+menuPage page2 = {
+    1, //optionCount
+    2, //pageIndex
+    { //options
+        "Warp To Zone",
+    },
+    { //menuProc
+        &ZoneWarp,
+    },
+    { //flags
+        -1,
+    },
+
+    page2Strings,
+};
+
 menuPage* pageList[] = {
     &page0,
+    &page1,
+    &page2,
 };
 
 s32 pageListTotal = ARRAY_COUNT(pageList);

@@ -3,6 +3,10 @@
 
 extern Gfx Entity_YellowBlock_Render[];
 u32 savestateGameMode = -1;
+void print_lag_frames(s32 x, s32 y, TextColor* color);
+
+s32 menuCurRespawnZone = 1;
+s32 zoneLockout = 0;
 
 //80030AA0 texture entities
 
@@ -22,6 +26,8 @@ f32 parasolPullSpeed = 0.0f;
 s32 parasolPulled = 0;
 f32 parasolPullAngle = 0.0f;
 s32 printPositionBool = 0;
+
+void print_fps(s32 x, s32 y, TextColor* color);
 
 extern Gfx* gMainGfxPosPtr;
 
@@ -181,22 +187,19 @@ extern u32 D_800F1C54;
 extern u32 D_800F1C70;
 void func_800CB5C0(void);
 
-void func_800CB430_Hook(void) {
-    while (isSaveOrLoadActive == 1) {}
-    D_800F1C30.unk18 = (s32) D_800EAE78;
-    func_800CBA4C(0x8033E400, 0x51400, &D_800F1C30);
-    func_800CC270(&D_800F1C54, 0x8000, 0);
-    func_800CC270(&D_800F1C54, 0x8000, 1);
-    func_800CD5D0(&D_800F1C70);
-    func_800CB630(&func_800CB5C0);
-}
+// void func_800CB430_Hook(void) {
+//     while (isSaveOrLoadActive == 1) {}
+//     D_800F1C30.unk18 = (s32) D_800EAE78;
+//     func_800CBA4C(0x8033E400, 0x51400, &D_800F1C30);
+//     func_800CC270(&D_800F1C54, 0x8000, 0);
+//     func_800CC270(&D_800F1C54, 0x8000, 1);
+//     func_800CD5D0(&D_800F1C70);
+//     func_800CB630(&func_800CB5C0);
+// }
 
 void loadstateMain(void) {
     u32 mask;
     u32 savestateHeader = (*(u32*)ramAddrSavestateDataSlot1); //not really a header, but savestates always start with 0x4620610944222000
-    u32 curCount = osGetCount();
-    u64 count2;
-    u64 elapsedMillisecondsSavestate = 0;
 
     mask = __osDisableInt();
     //wait on rsp
@@ -219,19 +222,7 @@ void loadstateMain(void) {
     //this will allow the user to load a savestate after crashing
     
     if (savestateHeader == 0x03E00008) {
-        while (1) {
-            count2 = osGetCount();
-            if (count2 < curCount) {
-                count2 += 0x100000000;
-            }
-            
-            elapsedMillisecondsSavestate = OS_CYCLES_TO_USEC(count2 - curCount);
-            if (elapsedMillisecondsSavestate > 500000) {
-                break;
-            }
-        }
         customMemCpy((void*)ramStartAddr, ramAddrSavestateDataSlot1, (u32)ramEndAddr - (u32)ramStartAddr);
-        //crash_screen_sleep(500); //sleep 500 ms
         osInvalICache((void*)0x80000000, 0x4000);
     }
 
@@ -242,9 +233,6 @@ void loadstateMain(void) {
 
 void savestateMain(void) {
     u32 mask;
-    u32 curCount = osGetCount();
-    u64 count2;
-    u64 elapsedMillisecondsSavestate = 0;
     
     mask = __osDisableInt();
 
@@ -265,17 +253,8 @@ void savestateMain(void) {
     //invalidate caches
     osInvalICache((void*)0x80000000, 0x4000);
     osInvalDCache((void*)0x80000000, 0x2000);
-    while (1) {
-        count2 = osGetCount();
-        if (count2 < curCount) {
-            count2 += 0x100000000;
-        }
-        
-        elapsedMillisecondsSavestate = OS_CYCLES_TO_USEC(count2 - curCount);
-        if (elapsedMillisecondsSavestate > 500000) {
-            break;
-        }
-        }
+
+    //load state
     customMemCpy((void*)ramAddrSavestateDataSlot1, (void*)ramStartAddr, ramEndAddr - ramStartAddr);
     savestateGameMode = gGameMode;
     //savestate1Size = ramEndAddr - ramStartAddr;
@@ -712,7 +691,7 @@ void printParasolPulledFrame(void) {
 }
 
 void PrintPosition(void) {
-    TextPosition textPos = {20, 50};
+    TextPosition textPos = {20, 87};
     char buffer[100];
     _bzero(buffer, sizeof(buffer));
     SetDefaultTextParametersWithColor(&Purple, textPos.xPos, textPos.yPos);
@@ -742,12 +721,35 @@ void PrintMenuDisplays(void) {
     if (toggles[TOGGLE_DISPLAY_POSITION]) {
         PrintPosition();
     }
+
+    if (toggles[TOGGLE_DISPLAY_FPS]) {
+        print_fps(260, 207, &Cyan);
+    }
+
+    if (toggles[TOGGLE_DISPLAY_LAG_FRAMES]) {
+        print_lag_frames(200, 207, &Green);
+    }
+
+    if (toggles[TOGGLE_DISPLAY_ZONE]) {
+        printCurrentRespawnZone();
+    }
 }
 
 void printCustomTextInC(void) {
 
     MainTimer();
     PrintMenuDisplays();
+
+    if (currPageNo == 2 && isMenuActive == 1) {
+        u8 buffer[8];
+        TextPosition textPos = {130, 45};
+
+        _bzero(buffer, sizeof(buffer));
+        SetDefaultTextParametersWithColor(&Green, textPos.xPos, textPos.yPos);
+
+        _sprintf(buffer, "%d", menuCurRespawnZone);
+        printDebugText(buffer);        
+    }
 
     if (isMenuActive == 1) {
         updateMenuInput();
@@ -844,6 +846,10 @@ void func_800293F0_Hook2(void) {
         return;
     }
 
+    if (isMenuActive == 1) {
+        return;
+    }
+
     if (currentlyPressedButtons & L_JPAD) {
         isSaveOrLoadActive = 1;
         osCreateThread(&gCustomThread.thread, 255, (void*)savestateMain, NULL,
@@ -875,9 +881,55 @@ void hookAt80029574(void);
 void hookAt80029758(void);
 void func_800BE480(void);
 void printCustomText4(void);
-void func_80029758_Hook(void) {
-    printCurrentSpeed();
-    func_800BE480(); //restore from hook
+
+// ------------- FPS COUNTER ---------------
+// To use it, call print_fps(x,y); every frame.
+#define FRAMETIME_COUNT 30
+#define	OS_CPU_COUNTER		(OS_CLOCK_RATE*3/4)
+
+OSTime frameTimes[FRAMETIME_COUNT] = {0};
+u8 curFrameTimeIndex = 0;
+u32 lag_frames = 0;
+
+extern u32 __osVIIntrCount;
+u32 frame_count = 0;
+
+void cCompareVICount(void) {
+    lag_frames = (__osVIIntrCount / 2) - frame_count; //if 0, no lag occurred
+    frame_count++;
+}
+
+// Call once per frame
+f32 calculate_and_update_fps(void) {
+    u32 newTime = osGetCount();
+    u32 oldTime = frameTimes[curFrameTimeIndex];
+    frameTimes[curFrameTimeIndex] = newTime;
+
+    curFrameTimeIndex++;
+    if (curFrameTimeIndex >= FRAMETIME_COUNT) {
+        curFrameTimeIndex = 0;
+    }
+
+    return (1000000.0f * FRAMETIME_COUNT * (OS_CPU_COUNTER/15625.0f) / (1000000.0f/15625.0f)) / (f32)(newTime - oldTime);
+}
+
+void print_lag_frames(s32 x, s32 y, TextColor* color) {
+    char buffer[16];
+
+    _bzero(buffer, sizeof(buffer));
+    _sprintf(buffer, "%d", lag_frames);
+    SetDefaultTextParametersWithColor(color, x, y);
+    printDebugText(buffer);
+}
+
+void print_fps(s32 x, s32 y, TextColor* color) {
+    f32 fps = calculate_and_update_fps();
+    char buffer[16];
+
+    _bzero(buffer, sizeof(buffer));
+    _sprintf(buffer, "%2.2f", fps);
+    SetDefaultTextParametersWithColor(color, x, y);
+    printDebugText(buffer);
 }
 
 void hookAt800CBDC0(void);
@@ -886,23 +938,14 @@ void cBootFunction(void) { //ran once on boot
     crash_screen_init();
     stateCooldown = 0;
     savestateCurrentSlot = 0;
+    lag_frames = 0;
     //savestate1Size = 0;
     isSaveOrLoadActive = 0;
     hookCode((void*)0x800E0790, &func_800E0790_Hook); //rng hook to track call total
     hookCode((void*)0x8004FBD0, &copyCallsToPowerupCalls); //when powerup is grabbed, copy calls to another var
 
-    //hookCode((void*)0x800B3EA8, &printCustomText); //print our custom text when in game
     hookCode((void*)0x8002858C, &printCustomText2); //print our custom text when in game
-    //hookCode((void*)0x80028D3C, &printCustomText3); //print our custom text when in game
-    //hookCode((void*)0x80029D60, &printCustomText4); //print our custom text when in game
-
-    //hookCode((void*)0x800CBDC0, &hookAt800CBDC0);
-
-    //hookCode((void*)func_800293F0, func_800293F0_Hook);
-
-    hookCode((void*)0x800CB430, func_800CB430_Hook);
-
-    hookCode((void*)0x80029758, &hookAt80029758);
+    //hookCode((void*)0x800507C0, &printCustomText3);
 
     hookCode((void*)0x80029574, &hookAt80029574);
     
@@ -1057,14 +1100,116 @@ void ifPullParasolPrint(void) {
     }
 }
 
+extern u8 UnlockedCostumes;
+
+void LimitZone(void) {
+    switch (gCurArea) {
+        case 1:
+            if (menuCurRespawnZone >= ARRAY_COUNT(SkyLandArea0) - 1) {
+                menuCurRespawnZone = ARRAY_COUNT(SkyLandArea0) - 1;
+            }
+            break;
+        case 0x29:
+            if (menuCurRespawnZone >= ARRAY_COUNT(SkyLandArea1) - 1) {
+                menuCurRespawnZone = ARRAY_COUNT(SkyLandArea1) - 1;
+            }
+            break;
+        case 2:
+            if (menuCurRespawnZone >= ARRAY_COUNT(CarnivalLandArea0) - 1) {
+                menuCurRespawnZone = ARRAY_COUNT(CarnivalLandArea0) - 1;
+            }
+            break;
+        case 0x30:
+            if (menuCurRespawnZone >= ARRAY_COUNT(CarnivalLandArea1) - 1) {
+                menuCurRespawnZone = ARRAY_COUNT(CarnivalLandArea1) - 1;
+            }
+            break;
+        case 0x2A:
+            if (menuCurRespawnZone >= ARRAY_COUNT(CarnivalLandArea2)) {
+                menuCurRespawnZone = ARRAY_COUNT(CarnivalLandArea2) - 1;
+            }
+            break;
+        case 3:
+            if (menuCurRespawnZone >= ARRAY_COUNT(IceLandArea0) - 1) {
+                menuCurRespawnZone = ARRAY_COUNT(IceLandArea0) - 1;
+            }
+            break;
+        case 0x2B:
+            if (menuCurRespawnZone >= ARRAY_COUNT(IceLandArea1) - 1) {
+                menuCurRespawnZone = ARRAY_COUNT(IceLandArea1) - 1;
+            }
+            break;
+        case 0x31:
+            if (menuCurRespawnZone >= ARRAY_COUNT(IceLandArea2) - 1) {
+                menuCurRespawnZone = ARRAY_COUNT(IceLandArea2) - 1;
+            }
+            break;
+        case 4:
+            if (menuCurRespawnZone >= ARRAY_COUNT(EdoLandArea0) - 1) {
+                menuCurRespawnZone = ARRAY_COUNT(EdoLandArea0) - 1;
+            }
+            break;
+        case 0x2C:
+            if (menuCurRespawnZone >= ARRAY_COUNT(EdoLandArea1) - 1) {
+                menuCurRespawnZone = ARRAY_COUNT(EdoLandArea1) - 1;
+            }
+            break;
+        case 5:
+            if (menuCurRespawnZone >= ARRAY_COUNT(ToyLandArea0) - 1) {
+                menuCurRespawnZone = ARRAY_COUNT(ToyLandArea0) - 1;
+            }
+            break;
+        case 0x2D:
+            if (menuCurRespawnZone >= ARRAY_COUNT(ToyLandArea1) - 1) {
+                menuCurRespawnZone = ARRAY_COUNT(ToyLandArea1) - 1;
+            }
+            break;
+        case 6:
+            if (menuCurRespawnZone >= ARRAY_COUNT(PyramidLandArea0) - 1) {
+                menuCurRespawnZone = ARRAY_COUNT(PyramidLandArea0) - 1;
+            }
+            break;
+        case 0x2E:
+            if (menuCurRespawnZone >= ARRAY_COUNT(PyramidLandArea1) - 1) {
+                menuCurRespawnZone = ARRAY_COUNT(PyramidLandArea1) - 1;
+            }
+            break;
+    }
+}
+
 void perFrameCFunction(void) {
     //gSP1Triangle(Gfx *gdl, s32 v0, s32 v1, s32 v2, s32 flag)
+
+    cCompareVICount(); //used for calculating lag frames
     
     debugFlag = 1;
     D_80160648 = 0x3F; //unlock all levels
 
     tickAirborneFrames();
     ifPullParasolPrint();
+
+    UnlockedCostumes = 0xFE;
+
+    if (currPageNo == 2) { //is zone page
+        if (currentlyHeldButtons & R_TRIG && currentlyPressedButtons & R_JPAD) {
+            menuCurRespawnZone++;
+        } else if (currentlyHeldButtons & R_TRIG && currentlyPressedButtons & L_JPAD) {
+            menuCurRespawnZone--;
+            if (menuCurRespawnZone == 0) {
+                menuCurRespawnZone = 1;
+            }
+        } else if (currentlyHeldButtons & L_TRIG && currentlyHeldButtons & R_JPAD) {
+            menuCurRespawnZone++;
+        } else if (currentlyHeldButtons & L_TRIG && currentlyHeldButtons & L_JPAD) {
+            menuCurRespawnZone--;
+            if (menuCurRespawnZone == 0) {
+                menuCurRespawnZone = 1;
+            }
+        }
+        LimitZone();
+    }
+
+    
 
     if (infiniteHealthBool == 1) {
         playerHealth = 10;
@@ -1090,6 +1235,10 @@ void perFrameCFunction(void) {
     //R + dpad down toggles menu
     if (currentlyHeldButtons & R_TRIG && currentlyPressedButtons & CONT_DOWN) {
         isMenuActive ^= 1;
+    }
+
+    if (!(currentlyHeldButtons & R_TRIG) && currentlyPressedButtons & D_JPAD) {
+        lag_frames = 0;
     }
 
     //dpad down only, toggle XYZ display

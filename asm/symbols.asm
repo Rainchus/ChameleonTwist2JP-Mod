@@ -1,34 +1,6 @@
 // Tell armips' linker where the assets we declared in sm64.h are located
-// .definelabel dmaCopy, 0x80062088
-// .definelabel dmaCopy2, 0x80061FE8
-// .definelabel sleepVProcess, 0x800635B4
-// .definelabel drawDebugText, 0x800622BC
-// .definelabel mp1_sprintf, 0x8008C490
-// .definelabel mallocPerm, 0x8003B6A4
-// .definelabel createBox, 0x80062364
 .definelabel osGetTime, 0x800E2CF0
-// .definelabel osGetCount, 0x80093780
-// .definelabel __osVIIntrCount, 0x800ED608
-// .definelabel rng_seed, 0x800C2FF4
-// .definelabel GetRandomByte, 0x8001758C
-// .definelabel rngSeed, 0x800C2FF4
-// .definelabel func_80018B2C, 0x80018B2C
-// .definelabel func_8001E5A0, 0x8001E5A0
-// .definelabel func_800247FC, 0x800247FC
-// .definelabel func_8005E3FC, 0x8005E3FC
-// .definelabel boxDrawn, 0x800C59A6
-// .definelabel box0Struct, 0x800ED448
-// .definelabel minigameIslandLives, 0x800F37BB
-// .definelabel func_800672DC, 0x800672DC
-// .definelabel func_800635B4, 0x800635B4
-// .definelabel func_800672B0, 0x800672B0
-// .definelabel D_800D84E4, 0x800D84E4
-// .definelabel func_8002B6C8, 0x8002B6C8
-// .definelabel func_8001DFC0, 0x8001DFC0
-// .definelabel func_80025658, 0x80025658
-// .definelabel func_800621D8, 0x800621D8
-// .definelabel osContGetReadData, 0x80090120
-
+.definelabel __osViIntrCount, 0x801CCA8C
 
 .definelabel func_80039D3C, 0x80039D3C
 .definelabel func_800510A8, 0x800510A8
@@ -145,6 +117,8 @@
 .definelabel func_800D6160, 0x800D6160
 .definelabel func_800293F0, 0x800293F0
 .definelabel func_800BE480, 0x800BE480
+.definelabel DisplayHealth, 0x80039D3C
+.definelabel gCurArea, 0x80160634
 
 .definelabel func_800CB630, 0x800CB630;
 .definelabel func_800CBA4C, 0x800CBA4C;
@@ -155,6 +129,8 @@
 .definelabel D_800F1C54, 0x800F1C54;
 .definelabel D_800F1C70, 0x800F1C70;
 .definelabel func_800CB5C0, 0x800cb5c0;
+
+.definelabel UnlockedCostumes, 0x8016451A;
 
 //mainThread 8001C81C
 
@@ -215,6 +191,10 @@ LW s1, 0x0074 (sp)
 LW s2, 0x0070 (sp)
 JR RA
 ADDIU sp, sp, 0x80
+
+.org 0x800550E8
+J zoneSetCheck
+NOP
 
 .org 0x8002691C
 J moreReplacedCode

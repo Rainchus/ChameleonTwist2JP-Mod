@@ -222,6 +222,9 @@ enum Toggles {
     TOGGLE_DISPLAY_SPEED,
     TOGGLE_DISPLAY_POSITION,
     TOGGLE_POWERUP_LOCK,
+    TOGGLE_DISPLAY_FPS,
+    TOGGLE_DISPLAY_LAG_FRAMES,
+    TOGGLE_DISPLAY_ZONE,
 };
 
 enum PowerUpIDs {
@@ -240,5 +243,29 @@ extern s32 currOptionNo;
 extern s32 isMenuActive;
 void updateMenuInput(void);
 extern s8 toggles[];
+extern s16 gCurArea;
+
+
+
+
+extern char* SkyLandArea0[32];
+extern char* SkyLandArea1[11];
+
+extern char* CarnivalLandArea0[13];
+extern char* CarnivalLandArea1[24];
+extern char* CarnivalLandArea2[19];
+
+extern char* IceLandArea0[40];
+extern char* IceLandArea1[2];
+extern char* IceLandArea2[13];
+
+extern char* EdoLandArea0[23];
+extern char* EdoLandArea1[35];
+
+extern char* ToyLandArea0[25];
+extern char* ToyLandArea1[17];
+
+extern char* PyramidLandArea0[22];
+extern char* PyramidLandArea1[21];
 
 #endif
