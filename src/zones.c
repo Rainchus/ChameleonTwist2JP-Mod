@@ -80,7 +80,7 @@ char* CarnivalLandArea1[] = {
     "Carpet Ride 1 After Trees", //zone 15
     "After Carpet Ride 1", //zone 16
     "Carpet Ride 2", //zone 17
-    "After Carpet Ride 2" //zone 18
+    "After Carpet Ride 2", //zone 18
     "Slide After Carpet Ride 2", //zone 19
     "3 Teacups Area", //zone 20
     "After 3 Teacups", //zone 21
@@ -147,11 +147,11 @@ char* IceLandArea0[] = {
     "Seahorses", //zone 32
     "Behind Ice Wall", //zone 33
     "Platform Spins", //zone 34
-    "Above Platform Spins", //zone 34
-    "Floating Ice Platforms", //zone 35
-    "Before Staircase", //zone 36
-    "Staircase", //zone 37
-    "Mid Staircase", //zone 38
+    "Above Platform Spins", //zone 35
+    "Floating Ice Platforms", //zone 36
+    "Before Staircase", //zone 37
+    "Staircase", //zone 38
+    "Mid Staircase", //zone 39
 };
 char* IceLandArea1[] = {
     "", //zone 0

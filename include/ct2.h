@@ -254,7 +254,7 @@ extern char* SkyLandArea0[32];
 extern char* SkyLandArea1[11];
 
 extern char* CarnivalLandArea0[13];
-extern char* CarnivalLandArea1[25];
+extern char* CarnivalLandArea1[26];
 extern char* CarnivalLandArea2[19];
 
 extern char* IceLandArea0[40];
