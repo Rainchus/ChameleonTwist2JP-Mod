@@ -11,32 +11,19 @@ ADDIU a2, r0, 0x0001
 J 0x80026760
 NOP
 
-__osDpDeviceBusy:
-LUI t6, 0xA410
-LW a0, 0x000C (t6)
-ADDIU sp, sp, -0x08
-ANDI t7, a0, 0x0100
-BEQZ t7, dpRet
-NOP
-B dpExit
-ADDIU v0, r0, 1
-dpRet:
-OR v0, r0, r0
-dpExit:
-JR RA
-ADDIU sp, sp, 0x08
+printCustomText2:
+ADDIU sp, sp, -0x18 //restore from hook
+SW a0, 0x0018 (sp) //restore from hook
 
-customMemCpy: //requires 0x08 alignment
-BLEZ a2, exitMemCpy
-LD t0, 0x0000 (a1)
-SD t0, 0x0000 (a0)
-ADDIU a1, a1, 8
-ADDIU a0, a0, 8
-BEQ r0, r0, customMemCpy
-ADDIU a2, a2, -8
-exitMemCpy:
-JR RA
+addiu sp, sp, -0x20
+SW ra, 0x0018 (sp)
+SW ra, 0x0014 (sp)
+
+JAL printCustomTextInC
 NOP
+LW ra, 0x0018 (sp)
+J 0x80028594
+addiu sp, sp, 0x20
 
 osViRepeatLine:
 ADDIU          SP, SP, -0x18
@@ -69,64 +56,4 @@ ADDIU          SP, SP, 0x18
 infiniteLoop:
 NOP
 J infiniteLoop
-NOP
-
-beforePrintSetVariable:
-ADDIU sp, sp, -0x18
-SW ra, 0x0010 (sp)
-SW a0, 0x0014 (sp)
-JAL DisplayDebugMenu
-NOP
-LW ra, 0x0010 (sp)
-LW a0, 0x0014 (sp)
-ADDIU sp, sp, 0x18
-LUI a3, 0x8010
-J 0x802032DC
-ADDIU a3, a3, 0xF1C0
-
-printCustomText2:
-ADDIU sp, sp, -0x18 //restore from hook
-SW a0, 0x0018 (sp) //restore from hook
-
-addiu sp, sp, -0x20
-SW ra, 0x0018 (sp)
-SW ra, 0x0014 (sp)
-
-JAL printCustomTextInC
-NOP
-LW ra, 0x0018 (sp)
-J 0x80028594
-addiu sp, sp, 0x20
-
-guRandHook:
-LI t0, calls
-LW t1, 0x0000 (t0)
-ADDIU t1, t1, 1
-SW t1, 0x0000 (t0) //update calls
-
-LUI a0, 0x800F
-LW a0, 0x3FF0 (a0)
-LUI at, 0x800F
-SLL t6, a0, 2
-ADDIU t7, t6, 0x0002
-ADDIU t8, t6, 0x0003
-MULTU t7, t8
-MFLO a1
-SRL v0, a1, 2
-JR RA
-SW v0, 0x3FF0 (at)
-
-ZoneSetCheck:
-LI t5, zoneLockout
-LW t6, 0x0000 (t5)
-BNEZ t6, skipGameZoneWrite
-NOP
-SH s3, 0xAE00 (at)
-skipGameZoneWrite:
-ADDIU t6, t6, -1
-BLTZ t6, skipWrite
-NOP
-SW t6, 0x0000 (t5) //remove zone lockout
-skipWrite:
-J 0x80055124
 NOP

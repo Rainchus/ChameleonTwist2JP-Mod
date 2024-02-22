@@ -22,7 +22,7 @@ LUI a0, 0
 LUI a1, 0x00C0 //0xC00000 rom addr
 LUI a2, 0x8040 //0x80400000 ram addr
 JAL osPiRawStartDma
-LUI a3, 0x000C //dma 0.75 MB (update if more space needed, although savestate location would need adjustment)
+LUI a3, 0x0002
 
 //wait on our dma to finish before continuing
 dmaBusyLoop:

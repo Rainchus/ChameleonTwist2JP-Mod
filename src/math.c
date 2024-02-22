@@ -1,4 +1,3 @@
-
 typedef unsigned int UQItype    __attribute__ ((mode (QI)));
 typedef          int SItype     __attribute__ ((mode (SI)));
 typedef unsigned int USItype    __attribute__ ((mode (SI)));
