@@ -5,3 +5,4 @@ syms.txt
 build.ninja
 .ninja_deps
 .ninja_log
+asm/main.asm
