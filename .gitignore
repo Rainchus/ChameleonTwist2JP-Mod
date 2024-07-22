@@ -1,3 +1,7 @@
 rom/**
 obj/**
 .vscode/**
+syms.txt
+build.ninja
+.ninja_deps
+.ninja_log

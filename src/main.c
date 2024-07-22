@@ -10,6 +10,8 @@ s32 zoneLockout = 0;
 u32 lag_frames = 0;
 u32 frame_count = 0;
 u8 curFrameTimeIndex = 0;
+s32 prevCallCount = 0;
+s32 callCopy = 0;
 extern u32 __osVIIntrCount;
 //80030AA0 texture entities
 
@@ -204,6 +206,43 @@ void loadstateMain(void) {
     u32 savestateHeader = (*(u32*)ramAddrSavestateDataSlot1); //not really a header, but savestates always start with 0x4620610944222000
 
     mask = __osDisableInt();
+
+    // //__osSpDeviceBusy
+    // for (;;)
+    // {
+    //     tmp = IO_READ(SP_STATUS_REG);
+    //     if ((tmp & 2) && (tmp & 1) && !(tmp & (SP_STATUS_DMA_BUSY | SP_STATUS_DMA_FULL)))
+    //         break;
+    // }
+
+    // for (;;)
+    // {
+    //     tmp = IO_READ(DPC_STATUS_REG);
+    //     if (!(tmp & 0x170))
+    //         break;
+    // }
+
+    // for (;;)
+    // {
+    //     tmp = IO_READ(AI_STATUS_REG);
+    //     if (!(tmp & 0xc0000001))
+    //         break;
+    // }
+
+    // for (;;)
+    // {
+    //     tmp = IO_READ(PI_STATUS_REG);
+    //     if (!(tmp & 3))
+    //         break;
+    // }
+
+    // for (;;)
+    // {
+    //     tmp = IO_READ(SI_STATUS_REG);
+    //     if (!(tmp & 3))
+    //         break;
+    // }
+
     //wait on rsp
     while (__osSpDeviceBusy() != 0) {}
 
@@ -217,7 +256,7 @@ void loadstateMain(void) {
     while (__osPiDeviceBusy() != 0) {}
 
     //invalidate caches
-    //osInvalICache((void*)0x80000000, 0x4000);
+    // osInvalICache((void*)0x80000000, 0x4000);
 	osInvalDCache((void*)0x80000000, 0x2000);
     
     //instead of checking savestate size, check savestate header to see if it's valid
@@ -225,6 +264,7 @@ void loadstateMain(void) {
     
     if (savestateHeader == 0x03E00008) {
         customMemCpy((void*)ramStartAddr, ramAddrSavestateDataSlot1, (u32)ramEndAddr - (u32)ramStartAddr);
+        calls = callCopy;
         osInvalICache((void*)0x80000000, 0x4000);
     }
 
@@ -256,8 +296,9 @@ void savestateMain(void) {
     osInvalICache((void*)0x80000000, 0x4000);
     osInvalDCache((void*)0x80000000, 0x2000);
 
-    //load state
+    //savestate
     customMemCpy((void*)ramAddrSavestateDataSlot1, (void*)ramStartAddr, ramEndAddr - ramStartAddr);
+    callCopy = calls;
     savestateGameMode = gGameMode;
     //savestate1Size = ramEndAddr - ramStartAddr;
 
@@ -402,12 +443,23 @@ char* StageList[] = {
 
 void printCallsUntilDecidedPowerup(void) {
     u8 buffer[40];
-    TextPosition textPos = {61, 196};
+    TextPosition textPos = {70, 210};
 
     _bzero(buffer, sizeof(buffer));
     SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
     _sprintf(buffer, "%d", callsAtPowerupDecision);
     printDebugText(buffer);
+}
+
+void printRngCallsPerFrame(void) {
+    u8 buffer[40];
+    TextPosition textPos = {120, 210};
+
+    _bzero(buffer, sizeof(buffer));
+    SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
+    _sprintf(buffer, "%d", calls - prevCallCount);
+    printDebugText(buffer);
+    prevCallCount = calls;
 }
 
 void printCurrentSpeed(void) {
@@ -761,8 +813,9 @@ void printCustomTextInC(void) {
     //         break;
     // }
 
-    // //printCallsUntilDecidedPowerup();
-    // printParasolPulledFrame();
+    printCallsUntilDecidedPowerup();
+    printRngCallsPerFrame();
+    //printParasolPulledFrame();
     // printCurrentPowerupLock();
     // printCurrentSpeed();
     // //printCurrentSeed();
