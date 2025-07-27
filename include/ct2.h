@@ -2,12 +2,14 @@
 #define _CT2_H_
 
 #include "ultra64.h"
+#include "gfx.h"
+
+#define ALIGNED(n) __attribute__((aligned(n)))
+#define ARRAY_COUNT(arr) (s32)(sizeof(arr) / sizeof(arr[0]))
 
 extern u64 __osCurrentTime;
 extern u32 osMemSize;
 extern s16 p1ButtonsPressed;
-
-#define ARRAY_COUNT(arr) (sizeof(arr) / sizeof(arr[0]))
 
 typedef volatile unsigned long		vu32;	/* unsigned 32-bit */
 #define	PHYS_TO_K1(x)	((u32)(x)|0xA0000000)	/* physical to kseg1 */
@@ -239,6 +241,7 @@ enum PowerUpIDs {
     POWER_SHORT_TONGUE = 6,
     POWER_NOTHING = 7
 };
+
 
 extern s32 currPageNo;
 extern s32 currOptionNo;

@@ -12,11 +12,15 @@
 .definelabel D_800F6410, 0x800F6410
 .definelabel D_800F6498, 0x800F6498
 
+.definelabel gMasterGfxPos, 0x80101440
+
 .definelabel printText, 0x800BF230
 .definelabel unkPrintFunction, 0x80051468
 //.definelabel cFile, 0x800C2000
 .definelabel gCustomThread, 0x807F0000
 //.definelabel gCrashScreen, 0x807F6000
+.definelabel func_800263B4, 0x800263B4
+.definelabel kFontData, 0x807FFFC0
 .definelabel savestate1Size, 0x807FFFE8
 .definelabel voidOutCalls, 0x807FFFEC
 .definelabel callsEnteringSkyland, 0x807FFFF0

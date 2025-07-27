@@ -289,7 +289,8 @@
  * See the comment next to G_MAXZ for more info.
  */
 #define	G_MAXFBZ		0x3fff	/* 3b exp, 11b mantissa */
-
+#define GPACK_RGBA8888(r,g,b,a)       (gF_(r,8,24)|gF_(g,8,16)|               \
+                                       gF_(b,8,8)|gF_(a,8,0))
 #define	GPACK_RGBA5551(r, g, b, a)	((((r)<<8) & 0xf800) | 		\
 					 (((g)<<3) & 0x7c0) |		\
 					 (((b)>>2) & 0x3e) | ((a) & 0x1))
@@ -2849,7 +2850,7 @@ typedef union {
 #define	gSPClearGeometryMode(pkt, word)	gSPGeometryMode((pkt),(word),0)
 #define	gsSPClearGeometryMode(word)	gsSPGeometryMode((word),0)
 #define	gSPLoadGeometryMode(pkt, word)	gSPGeometryMode((pkt),-1,(word))
-#define	gsSPLoadGeometryMode(pkt, word)	gsSPGeometryMode(-1,(word))
+#define	gsSPLoadGeometryMode(word)	gsSPGeometryMode(-1,(word))
 
 #else	/* F3DEX_GBI_2 */
 #define	gSPSetGeometryMode(pkt, word)					\
@@ -3889,7 +3890,7 @@ typedef union {
 {									\
 	gDPSetTextureImage(pkt, fmt, siz, width, timg);			\
 	gDPSetTile(pkt, fmt, siz,					\
-		(((((lrs)-(uls)+1) * siz##_TILE_BYTES)+7)>>3), 0,	\
+		(((((lrs)-(uls)+1) * siz)+7)>>3), 0,	\
 		G_TX_LOADTILE, 0 , cmt, maskt, shiftt, cms, masks,	\
 		shifts);						\
 	gDPLoadSync(pkt);						\
@@ -3900,7 +3901,7 @@ typedef union {
 			(lrt)<<G_TEXTURE_IMAGE_FRAC);			\
 	gDPPipeSync(pkt);						\
 	gDPSetTile(pkt, fmt, siz,					\
-		(((((lrs)-(uls)+1) * siz##_LINE_BYTES)+7)>>3), 0,	\
+		(((((lrs)-(uls)+1) * siz)+7)>>3), 0,	\
 		G_TX_RENDERTILE, pal, cmt, maskt, shiftt, cms, masks,	\
 		shifts);						\
 	gDPSetTileSize(pkt, G_TX_RENDERTILE,				\
