@@ -15,7 +15,7 @@
 bootHook:
     LI a0, 0xC00000
     LUI a1, 0x8040
-    LUI a2, 0x0004
+    LUI a2, 0x0002
     JAL dma_copy
     ORI a2, a2, 0x0000
     J copiedHookCode

@@ -1276,7 +1276,7 @@ s32 fontInit = 0;
 extern Gfx* gMasterGfxPos; //pointer to current gfx array at 80101440
 extern gfx_font *kfont;
 
-Gfx customGfx[8092] ALIGNED(16) = {0};
+Gfx customGfx[256] ALIGNED(16) = {0};
 
 static Gfx kzgfx[] = {
     gsDPPipeSync(),
