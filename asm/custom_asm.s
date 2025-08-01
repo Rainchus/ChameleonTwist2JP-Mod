@@ -320,19 +320,20 @@ OR a0, v0, r0 //preserve v0
 //J PrintDebugMenu
 //ADDU a0, r0, a1
 
-stuff:
-JAL SetTimerStuff
-NOP
-J 0x800293B8
-NOP
+//when entering a stage, this sets the timer display to 0
+//stuff:
+    //JAL SetTimerStuff
+    //NOP
+    //J 0x800293B8
+    //NOP
 
 hookAt80029574:
-JAL 0x8003CBAC
-NOP
-JAL func_800293F0_Hook2
-NOP
-J 0x8002957C
-NOP
+    JAL 0x8003CBAC
+    NOP
+    JAL func_800293F0_Hook2
+    NOP
+    J 0x8002957C
+    NOP
 
 zoneSetCheck:
 LI t5, zoneLockout
@@ -524,3 +525,9 @@ ADDIU sp, sp, 0x18
 LUI a3, 0x8010
 J 0x802032DC
 ADDIU a3, a3, 0xF1C0
+
+initOverworldTimerAsm:
+    JAL initOverworldTimerC
+    NOP
+    J 0x80028B10
+    NOP

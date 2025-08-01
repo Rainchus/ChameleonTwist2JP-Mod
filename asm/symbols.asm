@@ -68,6 +68,7 @@
 .definelabel osDestroyThread, 0x800D89D0
 .definelabel osSendMesg, 0x800D75B0
 .definelabel __osSpDeviceBusy, 0x800E24D0
+.definelabel func_800286E8, 0x800286E8
 .definelabel __ossidevicebusy, 0x800E2500
 .definelabel rngSeed, 0x800F3FF0
 .definelabel func_800E80B0, 0x800E80B0

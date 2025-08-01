@@ -57,14 +57,14 @@ typedef struct unkLookatStruct {
 
 extern s16 gGameMode;
 extern s16 debugFlag;
-void MainTimer(void);
+void MainTimerBoss(void);
 
 s32 stateCooldown = 0; //does this work??
 s32 savestateCurrentSlot = 0;
 extern s32 savestate1Size;
 s32 savestate2Size = 0;
 s32 savestate3Size = 0;
-volatile s32 isSaveOrLoadActive = 0;
+volatile s32 isSaveOrLoadActive = INACTIVE_STATE;
 s32 saveOrLoadStateMode = 0;
 
 TextColor RedOrange = {
@@ -192,7 +192,7 @@ extern u32 D_800F1C70;
 void func_800CB5C0(void);
 
 // void func_800CB430_Hook(void) {
-//     while (isSaveOrLoadActive == 1) {}
+//     while (isSaveOrLoadActive != INACTIVE_STATE) {}
 //     D_800F1C30.unk18 = (s32) D_800EAE78;
 //     func_800CBA4C(0x8033E400, 0x51400, &D_800F1C30);
 //     func_800CC270(&D_800F1C54, 0x8000, 0);
@@ -270,7 +270,7 @@ void loadstateMain(void) {
 
     osWritebackDCacheAll();
     __osRestoreInt(mask);
-    isSaveOrLoadActive = 0; //allow thread to continue
+    isSaveOrLoadActive = INACTIVE_STATE; //allow thread to continue
 }
 
 void savestateMain(void) {
@@ -303,7 +303,7 @@ void savestateMain(void) {
     //savestate1Size = ramEndAddr - ramStartAddr;
 
     __osRestoreInt(mask);
-    isSaveOrLoadActive = 0; //allow thread to continue
+    isSaveOrLoadActive = INACTIVE_STATE; //allow thread to continue
 }
 
 extern u8 D_80160648;
@@ -765,30 +765,71 @@ void PrintMenuDisplays(void) {
     }
 }
 
+s32 digitCount = 0;
+char globalTextBuffer[256] = {0};
+
+void PrintDigitsForTest(void) {
+    if (currentlyPressedButtons & D_JPAD) {
+        globalTextBuffer[digitCount] = '\0';
+        digitCount--;
+        globalTextBuffer[digitCount] = '\0';
+    } else if (currentlyPressedButtons & L_JPAD) {
+        for (int i = 0; i < 8; i++) {
+            globalTextBuffer[digitCount--] = '\0';
+        }
+        globalTextBuffer[digitCount] = '\0';
+    } else if (currentlyPressedButtons & R_JPAD) {
+        for (int i = 0; i < 8; i++) {
+            globalTextBuffer[digitCount++] = 'A';
+        }
+        globalTextBuffer[digitCount] = '\0';
+    } else if (currentlyPressedButtons & U_JPAD) {
+        globalTextBuffer[digitCount++] = 'A';
+        globalTextBuffer[digitCount] = '\0';
+    }
+
+    if (digitCount < 0) {
+        digitCount = 0;
+    }
+
+    u8 buffer[256];
+    TextPosition textPos = {20, 160};
+
+    //_bzero(buffer, sizeof(buffer));
+    SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
+    _sprintf(buffer, "%s", globalTextBuffer);
+    printDebugText(buffer);
+
+}
+
 void printCustomTextInC(void) {
 
-    MainTimer();
-    PrintMenuDisplays();
+    // PrintDigitsForTest();
 
-    if (currPageNo == 2 && isMenuActive == 1) {
-        u8 buffer[8];
-        TextPosition textPos = {130, 45};
+    // afterBossHpSet(); //activate timer
+    //MainTimerBoss(); //display timer
+    MainTimerLevel();
+    // PrintMenuDisplays();
 
-        _bzero(buffer, sizeof(buffer));
-        SetDefaultTextParametersWithColor(&Green, textPos.xPos, textPos.yPos);
+    // if (currPageNo == 2 && isMenuActive == 1) {
+    //     u8 buffer[8];
+    //     TextPosition textPos = {130, 45};
 
-        _sprintf(buffer, "%d", menuCurRespawnZone);
-        printDebugText(buffer);        
-    }
+    //     _bzero(buffer, sizeof(buffer));
+    //     SetDefaultTextParametersWithColor(&Green, textPos.xPos, textPos.yPos);
 
-    if (isMenuActive == 1) {
-        updateMenuInput();
-        pageMainDisplay(currPageNo, currOptionNo);
-    }
+    //     _sprintf(buffer, "%d", menuCurRespawnZone);
+    //     printDebugText(buffer);        
+    // }
 
-    if (callsEnteringSkyland == 0) {
-        callsEnteringSkyland = calls;
-    }
+    // if (isMenuActive == 1) {
+    //     updateMenuInput();
+    //     pageMainDisplay(currPageNo, currOptionNo);
+    // }
+
+    // if (callsEnteringSkyland == 0) {
+    //     callsEnteringSkyland = calls;
+    // }
 
     // switch (boolPrintCustomText) {
     //     case 1:
@@ -813,8 +854,8 @@ void printCustomTextInC(void) {
     //         break;
     // }
 
-    printCallsUntilDecidedPowerup();
-    printRngCallsPerFrame();
+    // printCallsUntilDecidedPowerup();
+    // printRngCallsPerFrame();
     //printParasolPulledFrame();
     // printCurrentPowerupLock();
     // printCurrentSpeed();
@@ -882,7 +923,7 @@ void func_800293F0_Hook2(void) {
     }
 
     if (currentlyPressedButtons & L_JPAD) {
-        isSaveOrLoadActive = 1;
+        isSaveOrLoadActive = SAVE_STATE;
         osCreateThread(&gCustomThread.thread, 255, (void*)savestateMain, NULL,
                 gCustomThread.stack + sizeof(gCustomThread.stack), 255);
         osStartThread(&gCustomThread.thread);
@@ -898,13 +939,13 @@ void func_800293F0_Hook2(void) {
         // D_800EAD5C = 0;
         // D_800FF20E = 0;
 
-        isSaveOrLoadActive = 1;
+        isSaveOrLoadActive = LOAD_STATE;
         osCreateThread(&gCustomThread.thread, 255, (void*)loadstateMain, NULL,
                 gCustomThread.stack + sizeof(gCustomThread.stack), 255);
         osStartThread(&gCustomThread.thread);
         currentlyPressedButtons = 0;
         stateCooldown = 5;
-        while (isSaveOrLoadActive == 1) {}
+        while (isSaveOrLoadActive != INACTIVE_STATE) {}
     }
 }
 
@@ -966,7 +1007,7 @@ void cBootFunction(void) { //ran once on boot
     savestateCurrentSlot = 0;
     lag_frames = 0;
     //savestate1Size = 0;
-    isSaveOrLoadActive = 0;
+    isSaveOrLoadActive = INACTIVE_STATE;
     hookCode((void*)0x800E0790, &func_800E0790_Hook); //rng hook to track call total
     hookCode((void*)0x8004FBD0, &copyCallsToPowerupCalls); //when powerup is grabbed, copy calls to another var
 
@@ -977,7 +1018,7 @@ void cBootFunction(void) { //ran once on boot
     
     hookCode((void*)0x8004E3DC, &recordCallsAtVoidOut);
 
-    hookCode((void*)0x80035E00, &func_80035E00_Hook);
+    //hookCode((void*)0x80035E00, &func_80035E00_Hook);
     
     hookCode((void*)0x800D5C54, &hookAt800D5C54);
 
@@ -1280,27 +1321,32 @@ void perFrameCFunction(void) {
         stateCooldown--;
     }
 
-    while (isSaveOrLoadActive != 0) {}
+    while (isSaveOrLoadActive != INACTIVE_STATE) {}
 }
 
-extern f32 D_800F57BC;
-extern Gfx* gMainGfxPosPtr;
-extern Mtx* MatrixBuffer;
+// extern f32 D_800F57BC;
+// extern Gfx* gMainGfxPosPtr;
+// extern Mtx* MatrixBuffer;
 
-void func_80035E00_Hook(unkLookatStruct* arg0) { //renders the world
-    u16 sp56;
-    f32 var_f0;
+// void func_80035E00_Hook(unkLookatStruct* arg0) { //renders the world
+//     u16 sp56;
+//     f32 var_f0;
 
-    var_f0 = 50.0f;
-    if ((gGameMode == 0xF) || (gGameMode == 0x10)) {
-        var_f0 = 40.0f;
-    }
-    guPerspective(MatrixBuffer, &sp56, 60.0f, 1.3333334f, var_f0, D_800F57BC, 1.0f);
-    gSPPerspNormalize(gMainGfxPosPtr++, sp56);
-    gSPMatrix(gMainGfxPosPtr++, MatrixBuffer++, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_PROJECTION);
-    guLookAt(MatrixBuffer, arg0->unk48, arg0->unk4C, arg0->unk50, arg0->unk54, arg0->unk58, arg0->unk5C, 0.0f, 1.0f, 0.0f);
-    gSPMatrix(gMainGfxPosPtr++, MatrixBuffer++, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+//     var_f0 = 50.0f;
+//     if ((gGameMode == 0xF) || (gGameMode == 0x10)) {
+//         var_f0 = 40.0f;
+//     }
+//     guPerspective(MatrixBuffer, &sp56, 60.0f, 1.3333334f, var_f0, D_800F57BC, 1.0f);
+//     gSPPerspNormalize(gMainGfxPosPtr++, sp56);
+//     gSPMatrix(gMainGfxPosPtr++, MatrixBuffer++, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_PROJECTION);
+//     guLookAt(MatrixBuffer, arg0->unk48, arg0->unk4C, arg0->unk50, arg0->unk54, arg0->unk58, arg0->unk5C, 0.0f, 1.0f, 0.0f);
+//     gSPMatrix(gMainGfxPosPtr++, MatrixBuffer++, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
 
-    //added code
-    //gSPDisplayList(gMainGfxPosPtr++, Entity_YellowBlock_Render);
+//     //added code
+//     //gSPDisplayList(gMainGfxPosPtr++, Entity_YellowBlock_Render);
+// }
+
+s32 initOverworldTimerC(void) {
+    afterBossHpSet();
+    return func_800286E8(0x80160634); //hack, this pointer gets passed into the func
 }

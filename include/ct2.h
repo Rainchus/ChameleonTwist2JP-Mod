@@ -7,6 +7,10 @@ extern u64 __osCurrentTime;
 extern u32 osMemSize;
 extern s16 p1ButtonsPressed;
 
+#define INACTIVE_STATE 0
+#define SAVE_STATE 1
+#define LOAD_STATE 2
+
 #define ARRAY_COUNT(arr) (sizeof(arr) / sizeof(arr[0]))
 
 typedef volatile unsigned long		vu32;	/* unsigned 32-bit */

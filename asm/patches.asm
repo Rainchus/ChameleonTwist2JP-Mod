@@ -137,6 +137,11 @@ ADDIU sp, sp, 0x28
 //J DLWriteHookAsm7
 //ADDIU sp, sp, 0x58
 
-.org 0x80028D28
-J stuff
-SH t6, 0x7BBC (at)
+//.org 0x80028D28
+    //J stuff
+    //SH t6, 0x7BBC (at)
+
+.org 0x80028B04
+    JAL initOverworldTimerAsm
+    NOP
+    NOP
