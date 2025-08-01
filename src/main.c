@@ -814,7 +814,7 @@ void printCustomTextInC(void) {
     // }
 
     printCallsUntilDecidedPowerup();
-    printRngCallsPerFrame();
+    // printRngCallsPerFrame();
     //printParasolPulledFrame();
     // printCurrentPowerupLock();
     // printCurrentSpeed();

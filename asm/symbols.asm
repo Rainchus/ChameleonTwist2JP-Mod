@@ -104,7 +104,7 @@
 .definelabel guPerspective, 0x800DCF10
 .definelabel guLookAt, 0x800DDB78
 .definelabel guMtxCatL, 0x800E0520
-.definelabel bossHpBar, 0x8016063C
+.definelabel gBossHp, 0x8016063C
 .definelabel osGetCount, 0x800DF550
 .definelabel _strlen, 0x800E16FC
 .definelabel D_800EAF60, 0x800EAF60

@@ -35,9 +35,13 @@ s32 afterBossHpSet(s32 arg0) {
     return arg0; //preserve from hook
 }
 
+extern f32 gBossHp;
+
 void MainTimer(void) {
     TextPosition textPos = {130, 209};
+    TextPosition textPos2 = {220, 209};
     char timeString[64];
+    char healthString[32];
 
     u64 curCount = osGetCount();
     u32 elapsedCountThisFrame = 0;
@@ -70,7 +74,15 @@ void MainTimer(void) {
     _sprintf(timeString, "%02d\'%02d\"%03d", minutes, seconds, milliseconds);
     printDebugText(timeString);
 
-    if (bossHpBar == 0.0f) {
+    //print boss hp
+
+    _bzero(healthString, sizeof(healthString));
+    SetDefaultTextParametersWithColor(&RedOrange, textPos2.xPos, textPos2.yPos);
+
+    _sprintf(healthString, "HP: %.2f", gBossHp);
+    printDebugText(healthString);
+
+    if (gBossHp == 0.0f) {
         timerState = PAUSED; //paused
     }
 }
