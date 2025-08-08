@@ -3,7 +3,7 @@ LI t7, calls
 LI v0, callsAtPowerupDecision
 LW t7, 0x0000 (t7)
 SW t7, 0x0000 (v0)
-//LI t7, seedAtPowerup
+//LI t7, gSeedAtPowerup
 //LI v0, rngSeed
 //LW v0, 0x0000 (v0)
 //SW v0, 0x0000 (t7)
@@ -70,10 +70,13 @@ LH t3, 0xAEEC (t3)
 
 
 recordCallsAtVoidOut:
-LI t0, voidOutCalls
+LI t0, gVoidOutCalls
 LI t1, calls
 LW t1, 0x0000 (t1)
 SW t1, 0x0000 (t0) //store calls at void out
+LI t0, gDoingVoidOut
+ORI t1, r0, 1
+SW t1, 0x0000 (t0)
 JAL 0x8004D410
 NOP
 J 0x8004E3E4
@@ -335,19 +338,34 @@ J 0x8002957C
 NOP
 
 zoneSetCheck:
-LI t5, zoneLockout
-LW t6, 0x0000 (t5)
-BNEZ t6, skipGameZoneWrite
-NOP
-SH s3, 0xAE00 (at)
-skipGameZoneWrite:
-ADDIU t6, t6, -1
-BLTZ t6, skipWrite
-NOP
-SW t6, 0x0000 (t5) //remove zone lockout
-skipWrite:
-J 0x80055124
-NOP
+    //s3 holds current zone
+    LI t5, gCurZone
+    LW t6, 0x000 (t5)
+    BNE s3, t6, newZone
+    NOP
+    afterNewZoneCheck:
+    LI t5, zoneLockout
+    LW t6, 0x0000 (t5)
+    BNEZ t6, skipGameZoneWrite
+    NOP
+    SH s3, 0xAE00 (at)
+    skipGameZoneWrite:
+    ADDIU t6, t6, -1
+    BLTZ t6, skipWrite
+    NOP
+    SW t6, 0x0000 (t5) //remove zone lockout
+    skipWrite:
+    J 0x80055124
+    NOP
+
+    newZone:
+    SW s3, 0x0000 (t5)
+    LI t5, gZoneChange
+    ORI t6, r0, 1
+    J afterNewZoneCheck
+    SW t6, 0x0000 (t5)
+
+
 
 copiedHookCode:
 JAL cBootFunction
@@ -524,3 +542,18 @@ ADDIU sp, sp, 0x18
 LUI a3, 0x8010
 J 0x802032DC
 ADDIU a3, a3, 0xF1C0
+
+stageTimerTick:
+    JAL TimerTickMainC
+    NOP
+    LUI t1, 0x8016
+    LW t1, 0x07FC (t1)
+    J 0x800B7090
+    NOP
+
+resetStageTimer:
+    JAL TimerResetMainC
+    NOP
+    LW a0, 0x0018 (sp)
+    J 0x800B3EDC
+    ADDIU v0, r0, 0x0001

@@ -111,10 +111,10 @@ u32 __osDisableInt(void);
 void __osRestoreInt(u32 mask);
 extern u32 calls;
 extern u32 callsAtPowerupDecision;
-extern u32 seedAtPowerup;
-extern u32 callsEnteringSkyland;
-extern u32 voidOutCalls;
-extern s16 respawnZone;
+extern u32 gSeedAtPowerup;
+extern u32 gCallsEnteringSkyland;
+extern u32 gVoidOutCalls;
+extern s16 gRespawnZone;
 void setDebugTextPosition(s32 xPos, s32 yPos, s32 unk);
 void formatText(void* buffer, void* string);
 void printDebugText(void* string);
@@ -226,7 +226,12 @@ enum Toggles {
     TOGGLE_DISPLAY_FPS,
     TOGGLE_DISPLAY_LAG_FRAMES,
     TOGGLE_DISPLAY_ZONE,
-    TOGGLE_INF_HEALTH
+    TOGGLE_INF_HEALTH,
+
+    //page 3
+    TOGGLE_TIMER_MAIN,
+    TOGGLE_TIMER_DISPLAY_VOID,
+    TOGGLE_TIMER_DISPLAY_ZONE_CHANGE
 };
 
 enum PowerUpIDs {
@@ -246,9 +251,11 @@ extern s32 isMenuActive;
 void updateMenuInput(void);
 extern s8 toggles[];
 extern s16 gCurArea;
-
-
-
+extern u32 gTimer;
+extern u32 gTimerCopy;
+extern f32 gBossHp;
+extern u32 gDoingVoidOut;
+extern u32 gZoneChange;
 
 extern char* SkyLandArea0[32];
 extern char* SkyLandArea1[11];

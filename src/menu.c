@@ -14,6 +14,10 @@ s8 toggles[] = {
     0, // TOGGLE_DISPLAY_LAG_FRAMES
     1, // TOGGLE_DISPLAY_ZONE
     0, // TOGGLE_INF_HEALTH
+
+    1, // TOGGLE_TIMER_MAIN
+    1, // TOGGLE_TIMER_DISPLAY_VOID
+    1, // TOGGLE_TIMER_DISPLAY_ZONE_CHANGE
 };
 
 typedef struct menuPage {
@@ -59,18 +63,46 @@ s32 toggleInfHealth(void) {
 }
 
 s32 toggleZoneDisplay(void) {
-    toggles[TOGGLE_DISPLAY_ZONE]++;
+    toggles[TOGGLE_DISPLAY_ZONE] ^= 1;
     return 1;
 }
 
 extern s32 menuCurRespawnZone;
 extern s32 zoneLockout;
+u32 gCurZone = 0;
 
 s32 ZoneWarp(void) {
-    respawnZone = menuCurRespawnZone;
+    gRespawnZone = menuCurRespawnZone;
+    gZoneChange = 1;
     zoneLockout = 4;
     gPlayerActors[0].pos.y = -10000.0f;
     return 1;
+}
+
+s32 ToggleTimer(void) {
+    toggles[TOGGLE_TIMER_MAIN] ^= 1;
+    return 1;    
+}
+
+s32 ToggleTimerIfDisplayOnVoid(void) {
+    toggles[TOGGLE_TIMER_DISPLAY_VOID] ^= 1;
+    return 1;    
+}
+
+s32 ToggleTimerIfDisplayedZoneChange(void) {
+    toggles[TOGGLE_TIMER_DISPLAY_ZONE_CHANGE] ^= 1;
+    return 1; 
+}
+
+u32 gTimer = 0;
+u32 gTimerCopy = 0;
+
+void TimerTickMainC(void) {
+    gTimer++;
+}
+
+void TimerResetMainC(void) {
+    gTimer = 0;
 }
 
 char string_ON[] = {
@@ -151,6 +183,12 @@ char** page2Strings[] = {
     ONAndOFF,
 };
 
+char** page3Strings[] = {
+    ONAndOFF,
+    ONAndOFF,
+    ONAndOFF,
+};
+
 menuPage page0 = {
     3, //optionCount
     0, //pageIndex
@@ -214,10 +252,33 @@ menuPage page2 = {
     page2Strings,
 };
 
+menuPage page3 = {
+    3, //optionCount
+    3, //pageIndex
+    { //options
+        "Timer Display",
+        "Show Time on Void",
+        "Timer 2",
+    },
+    { //menuProc
+        &ToggleTimer,
+        &ToggleTimerIfDisplayOnVoid,
+        &ToggleTimerIfDisplayedZoneChange,
+    },
+    { //flags
+        TOGGLE_TIMER_MAIN,
+        TOGGLE_TIMER_DISPLAY_VOID,
+        TOGGLE_TIMER_DISPLAY_ZONE_CHANGE
+    },
+
+    page3Strings,
+};
+
 menuPage* pageList[] = {
     &page0,
     &page1,
     &page2,
+    &page3,
 };
 
 s32 pageListTotal = ARRAY_COUNT(pageList);

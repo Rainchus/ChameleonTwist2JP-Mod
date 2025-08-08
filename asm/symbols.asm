@@ -18,9 +18,9 @@
 .definelabel gCustomThread, 0x807F0000
 //.definelabel gCrashScreen, 0x807F6000
 .definelabel savestate1Size, 0x807FFFE8
-.definelabel voidOutCalls, 0x807FFFEC
-.definelabel callsEnteringSkyland, 0x807FFFF0
-.definelabel seedAtPowerup, 0x807FFFF4
+.definelabel gVoidOutCalls, 0x807FFFEC
+.definelabel gCallsEnteringSkyland, 0x807FFFF0
+.definelabel gSeedAtPowerup, 0x807FFFF4
 .definelabel calls, 0x807FFFF8
 .definelabel callsAtPowerupDecision, 0x807FFFFC
 .definelabel printDigit, 0x80050DA0
@@ -80,7 +80,7 @@
 .definelabel sprintf, 0x800E0804
 .definelabel textStyle, 0x80185796
 .definelabel _bzero, 0x800DA130
-.definelabel respawnZone, 0x800EAE00
+.definelabel gRespawnZone, 0x800EAE00
 .definelabel gGameMode, 0x800EAF60
 .definelabel debugFlag, 0x800EAE64
 .definelabel textRed, 0x801857A8

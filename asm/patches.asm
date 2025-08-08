@@ -140,3 +140,12 @@ ADDIU sp, sp, 0x28
 .org 0x80028D28
 J stuff
 SH t6, 0x7BBC (at)
+
+//create custom timer tick
+.org 0x800B7088
+    J stageTimerTick
+    NOP
+
+.org 0x800B3ED4
+    J resetStageTimer
+    NOP

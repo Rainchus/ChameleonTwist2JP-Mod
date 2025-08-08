@@ -265,6 +265,7 @@ void loadstateMain(void) {
     if (savestateHeader == 0x03E00008) {
         customMemCpy((void*)ramStartAddr, ramAddrSavestateDataSlot1, (u32)ramEndAddr - (u32)ramStartAddr);
         calls = callCopy;
+        gTimer = gTimerCopy;
         osInvalICache((void*)0x80000000, 0x4000);
     }
 
@@ -299,6 +300,7 @@ void savestateMain(void) {
     //savestate
     customMemCpy((void*)ramAddrSavestateDataSlot1, (void*)ramStartAddr, ramEndAddr - ramStartAddr);
     callCopy = calls;
+    gTimerCopy = gTimer;
     savestateGameMode = gGameMode;
     //savestate1Size = ramEndAddr - ramStartAddr;
 
@@ -318,6 +320,9 @@ void formatText(void* buffer, void* string);
 void printDebugText(void* string);
 extern u32 rngSeed;
 void recordCallsAtVoidOut(void);
+
+u32 gZoneChange = 0;
+u32 gDoingVoidOut = 0;
 s32 curPowerupLock = 0;
 
 void _sprintf(void* destination, void* fmt, ...) {
@@ -503,7 +508,7 @@ void printCurrentRespawnZone(void) {
 
     _bzero(buffer, sizeof(buffer));
     SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
-    _sprintf(buffer, "Zone: %02d", respawnZone);
+    _sprintf(buffer, "Zone: %02d", gRespawnZone);
     printDebugText(buffer);
 }
 
@@ -647,7 +652,7 @@ void printCallsEnteringSkyland(void) {
 
     _bzero(buffer, sizeof(buffer));
     SetDefaultTextParametersWithColor(&White, textPos.xPos, textPos.yPos);
-    _sprintf(buffer, "SLCalls: %d", callsEnteringSkyland);
+    _sprintf(buffer, "SLCalls: %d", gCallsEnteringSkyland);
     printDebugText(buffer);
 }
 
@@ -667,7 +672,7 @@ void printVoidOutCalls(void) {
 
     _bzero(buffer, sizeof(buffer));
     SetDefaultTextParametersWithColor(&White, textPos.xPos, textPos.yPos);
-    _sprintf(buffer, "Void: %d", voidOutCalls);
+    _sprintf(buffer, "Void: %d", gVoidOutCalls);
     printDebugText(buffer);
 }
 
@@ -786,8 +791,8 @@ void printCustomTextInC(void) {
         pageMainDisplay(currPageNo, currOptionNo);
     }
 
-    if (callsEnteringSkyland == 0) {
-        callsEnteringSkyland = calls;
+    if (gCallsEnteringSkyland == 0) {
+        gCallsEnteringSkyland = calls;
     }
 
     // switch (boolPrintCustomText) {
@@ -813,7 +818,7 @@ void printCustomTextInC(void) {
     //         break;
     // }
 
-    printCallsUntilDecidedPowerup();
+    // printCallsUntilDecidedPowerup();
     // printRngCallsPerFrame();
     //printParasolPulledFrame();
     // printCurrentPowerupLock();
@@ -992,9 +997,9 @@ void cBootFunction(void) { //ran once on boot
 
     calls = 0;
     callsAtPowerupDecision = 0;
-    seedAtPowerup = 0;
-    callsEnteringSkyland = 0;
-    voidOutCalls = 0;
+    gSeedAtPowerup = 0;
+    gCallsEnteringSkyland = 0;
+    gVoidOutCalls = 0;
 
     callsState = 0;
     callsAtPowerupDecisionState = 0;

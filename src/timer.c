@@ -31,11 +31,13 @@ s32 afterBossHpSet(s32 arg0) {
     prevCount = startingCount;
     elapsedMicroseconds = 0;
     timerState = RUNNING;
+    gTimer = 0;
 
     return arg0; //preserve from hook
 }
 
-extern f32 gBossHp;
+u32 freezeTimer = 0;
+u32 gTimerStored = 0;
 
 void MainTimer(void) {
     TextPosition textPos = {130, 209};
@@ -48,42 +50,68 @@ void MainTimer(void) {
 
     u32 milliseconds, seconds, minutes;
 
-    if (timerState == NOT_RUNNING) {
+    u32 gTimeDisplayed;
+    f64 totalMilliseconds;
+
+    if (!toggles[TOGGLE_TIMER_MAIN]) {
         return;
     }
 
-    if (timerState != PAUSED) {
-        if (curCount < prevCount) {
-            curCount += 0x100000000;
+
+    if (toggles[TOGGLE_TIMER_DISPLAY_VOID]) {
+        if (gDoingVoidOut) {
+            freezeTimer = 90;
+            gDoingVoidOut = 0;
+            gTimerStored = gTimer;
         }
-
-        elapsedCountThisFrame = curCount - prevCount;
-        prevCount = curCount;
-
-        elapsedCounts += elapsedCountThisFrame;
     }
 
-    elapsedMicroseconds = OS_CYCLES_TO_USEC(elapsedCounts);
-    milliseconds = (elapsedMicroseconds / 1000) % 1000;
-    seconds = (elapsedMicroseconds / 1000000) % 60;
-    minutes = (elapsedMicroseconds / 1000000) / 60;
+    if (toggles[TOGGLE_TIMER_DISPLAY_ZONE_CHANGE]) {
+        if (gZoneChange) {
+            if (gTimer > 1) {
+                freezeTimer = 90;
+                gZoneChange = 0;
+                gTimerStored = gTimer;
+            } else {
+                gZoneChange = 0;
+            }
+        }
+    }
+
+
+    if (freezeTimer > 0) {
+        freezeTimer--;
+        totalMilliseconds = gTimerStored * (1000.0 / 30.0); // total time in ms
+        SetDefaultTextParametersWithColor(&Cyan, textPos.xPos, textPos.yPos);
+    } else {
+        totalMilliseconds = gTimer * (1000.0 / 30.0); // total time in ms
+        SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
+    }
+
+
+    int totalSeconds = (int)(totalMilliseconds / 1000.0);
+
+    minutes = totalSeconds / 60;
+    seconds = totalSeconds % 60;
+    milliseconds = (int)totalMilliseconds % 1000;
+
+
 
     _bzero(timeString, sizeof(timeString));
-    SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
+    
 
     _sprintf(timeString, "%02d\'%02d\"%03d", minutes, seconds, milliseconds);
     printDebugText(timeString);
 
     //print boss hp
 
-    _bzero(healthString, sizeof(healthString));
-    SetDefaultTextParametersWithColor(&RedOrange, textPos2.xPos, textPos2.yPos);
+    if (gBossHp != 0.0f) {
+        // timerState = PAUSED; //paused
+        _bzero(healthString, sizeof(healthString));
+        SetDefaultTextParametersWithColor(&RedOrange, textPos2.xPos, textPos2.yPos);
 
-    _sprintf(healthString, "HP: %.2f", gBossHp);
-    printDebugText(healthString);
-
-    if (gBossHp == 0.0f) {
-        timerState = PAUSED; //paused
+        _sprintf(healthString, "HP: %.2f", gBossHp);
+        printDebugText(healthString);
     }
 }
 
