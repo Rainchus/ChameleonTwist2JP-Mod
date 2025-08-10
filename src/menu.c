@@ -4,21 +4,7 @@
 #define UNITS_BETWEEN_LINES 14
 #define X_COORD_PER_LETTER 9
 
-s8 toggles[] = {
-    2,  // NO_TOGGLE
-    //page 0
-    1,  // TOGGLE_HIDE_SAVESTATE_TEXT
-    0, // TOGGLE_DISPLAY_POSITION
-    8, // TOGGLE_POWERUP_LOCK 
-    0, // TOGGLE_DISPLAY_FPS
-    0, // TOGGLE_DISPLAY_LAG_FRAMES
-    1, // TOGGLE_DISPLAY_ZONE
-    0, // TOGGLE_INF_HEALTH
-
-    1, // TOGGLE_TIMER_MAIN
-    1, // TOGGLE_TIMER_DISPLAY_VOID
-    1, // TOGGLE_TIMER_DISPLAY_ZONE_CHANGE
-};
+void SaveSettings(void);
 
 typedef struct menuPage {
     /* 0x00 */ s32 optionCount;
@@ -44,6 +30,11 @@ s32 togglePowerupLock(void) {
     if (toggles[TOGGLE_POWERUP_LOCK] > 8) {
         toggles[TOGGLE_POWERUP_LOCK] = 0;
     }
+    return 1;
+}
+
+s32 toggleDisplayFlutterFrames(void) {
+    toggles[TOGGLE_DISPLAY_FLUTTER_FRAMES] ^= 1;
     return 1;
 }
 
@@ -104,6 +95,10 @@ void TimerTickMainC(void) {
 void TimerResetMainC(void) {
     gTimer = 0;
 }
+
+char string_blank[] = {
+    ""
+};
 
 char string_ON[] = {
     "On"
@@ -166,13 +161,20 @@ char* ONAndOFF[] = {
     string_ON,
 };
 
+char* blankEntry[] = {
+    string_blank,
+    string_blank,
+};
+
 char** page0Strings[] = {
     ONAndOFF, //Display speed
     ONAndOFF, //Display position
-    PowerupStrings, //
+    ONAndOFF, //Display flutter frames
+    blankEntry, //save settings option
 };
 
 char** page1Strings[] = {
+    PowerupStrings,
     ONAndOFF,
     ONAndOFF,
     ONAndOFF,
@@ -190,43 +192,49 @@ char** page3Strings[] = {
 };
 
 menuPage page0 = {
-    3, //optionCount
+    4, //optionCount
     0, //pageIndex
     { //options
-        "Display Speed",
-        "Display Position",
-        "PowerUp Lock",
+        "Show Speed",
+        "Show Position",
+        "Show Flutter Frames",
+        "Save Settings"
     },
     { //menuProc
         &toggleDisplaySpeed,
         &toggleDisplayPosition,
-        &togglePowerupLock,
+        &toggleDisplayFlutterFrames,
+        &SaveSettings,
     },
     { //flags
         TOGGLE_DISPLAY_SPEED,
         TOGGLE_DISPLAY_POSITION,
-        TOGGLE_POWERUP_LOCK,
+        TOGGLE_DISPLAY_FLUTTER_FRAMES,
+        -1,
     },
 
     page0Strings,
 };
 
 menuPage page1 = {
-    4, //optionCount
+    5, //optionCount
     1, //pageIndex
     { //options
+        "PowerUp Lock",
         "Fps",
         "Lag Frames",
         "Show Zone",
         "Inf Health"
     },
     { //menuProc
+        &togglePowerupLock,
         &toggleFpsDisplay,
         &toggleLagFramesDisplay,
         &toggleZoneDisplay,
         &toggleInfHealth
     },
     { //flags
+        TOGGLE_POWERUP_LOCK,
         TOGGLE_DISPLAY_FPS,
         TOGGLE_DISPLAY_LAG_FRAMES,
         TOGGLE_DISPLAY_ZONE,

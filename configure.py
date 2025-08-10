@@ -11,6 +11,9 @@ s_files = glob.glob('asm/*.s', recursive=True)
 # .asm files are assembly files that often change the headersize
 asm_files = glob.glob('asm/*.asm', recursive=True)
 
+# .a files are precompiled files
+a_files = glob.glob('lib/*.a', recursive=True)
+
 rom_name = "ct2JP"
 rom_mod_name = f"{rom_name}.mod.z64"
 
@@ -96,5 +99,9 @@ with open("asm/main.asm", 'w') as file:
     for c_file in c_files:
         obj_file = os.path.join('obj', os.path.relpath(c_file, 'src')).replace('.c', '.o')
         file.write(f".importobj \"{obj_file}\"\n")
+
+    for a_file in a_files:
+        obj_file = os.path.join('lib', os.path.relpath(a_file, 'lib'))
+        file.write(f'.importobj "{obj_file}"\n')
 
     file.write(footer)

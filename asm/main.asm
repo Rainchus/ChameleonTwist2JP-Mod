@@ -19,6 +19,7 @@ PAYLOAD_START_RAM:
 .importobj "obj\timer.o"
 .importobj "obj\yellow_block.o"
 .importobj "obj\zones.o"
+.importobj "lib\libcart.a"
 
 .align 8
 PAYLOAD_END_RAM:

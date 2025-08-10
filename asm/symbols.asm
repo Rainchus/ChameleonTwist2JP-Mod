@@ -44,6 +44,15 @@
 .definelabel powerUpFloatArray, 0x800ECF64
 //.definelabel gPlayerActor, 0x80187290
 .definelabel gPlayerActors, 0x80187B00
+.definelabel gTongueLength, 0x80187AE4
+.definelabel gTongueState, 0x80187AE8
+
+.definelabel strchr, 0x800E1724
+.definelabel __osPiGetAccess, 0x800DE3E0
+.definelabel __osPiRelAccess, 0x800DE424
+.definelabel osVirtualToPhysical, 0x800DC1A0
+.definelabel __osEventStateTab, 0x801CC9E0
+.definelabel osWritebackDCache, 0x800DC220
 
 .definelabel osMemSize, 0x80000318
 .definelabel __osCurrentTime, 0x801CCA84

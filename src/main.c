@@ -1,10 +1,18 @@
 #include "../include/ct2.h"
+#include "../include/cart.h"
+#include "../include/ff.h"
+#include "../include/ffconf.h"
 #include <stdarg.h>
 
+extern s32 gTongueLength;
+extern s32 gTongueState;
 extern Gfx Entity_YellowBlock_Render[];
 u32 savestateGameMode = -1;
 void print_lag_frames(s32 x, s32 y, TextColor* color);
 
+s32 gTongueNotUsedFrames = 0;
+s32 gTongueStatePrev = 0;
+s32 gFlutterFrames = 0;
 s32 menuCurRespawnZone = 1;
 s32 zoneLockout = 0;
 u32 lag_frames = 0;
@@ -32,6 +40,7 @@ f32 parasolPullAngle = 0.0f;
 s32 printPositionBool = 0;
 
 void print_fps(s32 x, s32 y, TextColor* color);
+void MeasureFlutterFrames(void);
 
 extern Gfx* gMainGfxPosPtr;
 
@@ -770,10 +779,30 @@ void PrintMenuDisplays(void) {
     }
 }
 
+void PrintFlutterFrames(void) {
+    if (!toggles[TOGGLE_DISPLAY_FLUTTER_FRAMES]) {
+        return;
+    }
+
+    MeasureFlutterFrames();
+
+    if (gTongueState == TONGUE_EXTENDING) {
+        u8 buffer[8];
+        TextPosition textPos = {190, 45};
+
+        _bzero(buffer, sizeof(buffer));
+        SetDefaultTextParametersWithColor(&Green, textPos.xPos, textPos.yPos);
+
+        _sprintf(buffer, "%d", gFlutterFrames);
+        printDebugText(buffer);  
+    }
+}
+
 void printCustomTextInC(void) {
 
     MainTimer();
     PrintMenuDisplays();
+    PrintFlutterFrames();
 
     if (currPageNo == 2 && isMenuActive == 1) {
         u8 buffer[8];
@@ -965,8 +994,68 @@ void print_fps(s32 x, s32 y, TextColor* color) {
 
 void hookAt800CBDC0(void);
 
+FATFS FatFs = {0};
+char *path = "ct2.bin"; //example file for SD card writing
+FIL sdsavefile = {0};
+
+
+#define USE_SD_CARD TRUE
+
+FRESULT initFatFs(void) {
+	//Mount SD Card
+	return f_mount(&FatFs, "", 0);
+}
+
+__attribute__((aligned(16))) s8 toggles[] = {
+    2,  // NO_TOGGLE
+    //page 0
+    1, // TOGGLE_DISPLAY_SPEED
+    0, // TOGGLE_DISPLAY_POSITION
+    0, // TOGGLE_DISPLAY_FLUTTER_FRAMES
+
+    //page 1
+    1, // TOGGLE_POWERUP_LOCK
+    0, // TOGGLE_DISPLAY_FPS
+    0, // TOGGLE_DISPLAY_LAG_FRAMES
+    1, // TOGGLE_DISPLAY_ZONE
+    0, // TOGGLE_INF_HEALTH
+
+    //page 3
+    1, // TOGGLE_TIMER_MAIN
+    1, // TOGGLE_TIMER_DISPLAY_VOID
+    1, // TOGGLE_TIMER_DISPLAY_ZONE_CHANGE
+};
+
+s32 SaveSettings(void) {
+    UINT filebytesread;
+    FRESULT fileres;
+
+    fileres = f_open(&sdsavefile, path, FA_OPEN_ALWAYS | FA_WRITE | FA_READ);
+    f_write(&sdsavefile, toggles, ALIGN(sizeof(toggles), 4), &filebytesread);
+    f_close(&sdsavefile);
+    return 1; 
+}
+
 void cBootFunction(void) { //ran once on boot
+    UINT filebytesread;
+    char testString[] = "Testing f_write() call\n";
+    FRESULT fileres;
+
     crash_screen_init();
+
+    //initialize SD card from everdrive, create test file, close
+    cart_init();
+    initFatFs();
+    fileres = f_open(&sdsavefile, path, FA_OPEN_ALWAYS | FA_WRITE | FA_READ);
+    //if file already exist, load settings
+    if (fileres == FR_OK) {
+        f_read(&sdsavefile, toggles, sizeof(toggles), &filebytesread);
+        f_close(&sdsavefile);
+    } else {
+        f_write(&sdsavefile, testString, ALIGN(sizeof(testString), 4), &filebytesread);
+        f_close(&sdsavefile);
+    }
+
     stateCooldown = 0;
     savestateCurrentSlot = 0;
     lag_frames = 0;
@@ -1111,6 +1200,22 @@ void tickAirborneFrames(void) {
     } else {
         p1AirborneFrames = 0;
     }
+}
+
+void MeasureFlutterFrames(void) {
+    //if player is using tongue
+
+    if (gTongueState == TONGUE_IDLE) {
+        gTongueNotUsedFrames++;
+        gFlutterFrames = 0;
+    }
+
+    if (gTongueState == TONGUE_EXTENDING && gTongueStatePrev == TONGUE_IDLE) {
+        gFlutterFrames = gTongueNotUsedFrames;
+        gTongueNotUsedFrames = 0;
+    }
+
+    gTongueStatePrev = gTongueState;
 }
 
 void ifPullParasolPrint(void) {
