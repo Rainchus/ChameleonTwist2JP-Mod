@@ -11,7 +11,37 @@
 .definelabel D_800ECFD0, 0x800ECFD0
 .definelabel D_800F6410, 0x800F6410
 .definelabel D_800F6498, 0x800F6498
-
+.definelabel RandomF, 0x8003CBAC
+.definelabel D_800EAF60, 0x800EAF60
+.definelabel D_800EAE64, 0x800EAE64
+.definelabel D_800EAE70, 0x800EAE70
+.definelabel D_800EAE74, 0x800EAE74
+.definelabel D_800FF1C0, 0x800FF1C0
+.definelabel D_80160648, 0x80160648
+.definelabel D_80160659, 0x80160659
+.definelabel func_800294A8, 0x800294A8
+.definelabel func_800297A0, 0x800297A0
+.definelabel func_80029860, 0x80029860
+.definelabel func_80028C00, 0x80028C00
+.definelabel func_8003D1B8, 0x8003D1B8
+.definelabel func_802023F8_212A18, 0x802023F8
+.definelabel func_80200E88_2114A8, 0x80200E88
+.definelabel func_80202564_20AAD4, 0x80202564
+.definelabel func_80204EEC_20D45C, 0x80204EEC
+.definelabel func_80204060_20C5D0, 0x80204060
+.definelabel func_802005E8_210C08, 0x802005E8
+.definelabel func_802063AC_20E91C, 0x802063AC
+.definelabel func_802019CC_209F3C, 0x802019CC
+.definelabel func_80200B18_209088, 0x80200B18
+.definelabel func_80203640_20BBB0, 0x80203640
+.definelabel func_800AC440, 0x800AC440
+.definelabel func_800AC710, 0x800AC710
+.definelabel func_80201908_211F28, 0x80201908
+.definelabel func_801FFE88_2083F8, 0x801FFE88
+.definelabel func_800BE480, 0x800BE480
+.definelabel func_8007BB40, 0x8007BB40
+.definelabel func_8007E400, 0x8007E400
+.definelabel func_80202B08_213128, 0x80202B08
 .definelabel printText, 0x800BF230
 .definelabel unkPrintFunction, 0x80051468
 //.definelabel cFile, 0x800C2000
@@ -31,10 +61,9 @@
 .definelabel setTextOpacity, 0x80049DE8
 .definelabel currentlyHeldButtons, 0x800FF1C0
 .definelabel currentlyPressedButtons, 0x800FF1C6
-.definelabel D_80160648, 0x80160648
 .definelabel playerHealth, 0x80187BBC
 .definelabel D_80187b20, 0x80187b20
-
+.definelabel osTvType, 0x80000300
 .definelabel func_800505E0, 0x800505E0
 .definelabel func_80050694, 0x80050694
 .definelabel func_8005070C, 0x8005070C
@@ -116,7 +145,6 @@
 .definelabel gBossHp, 0x8016063C
 .definelabel osGetCount, 0x800DF550
 .definelabel _strlen, 0x800E16FC
-.definelabel D_800EAF60, 0x800EAF60
 .definelabel D_800EAF64, 0x800EAF64
 .definelabel func_800E8C00, 0x800E8C00
 .definelabel func_8003C9DC, 0x8003C9DC
@@ -125,10 +153,10 @@
 .definelabel D_800FF20E, 0x800FF20E
 .definelabel func_800D6160, 0x800D6160
 .definelabel func_800293F0, 0x800293F0
-.definelabel func_800BE480, 0x800BE480
 .definelabel DisplayHealth, 0x80039D3C
 .definelabel gCurArea, 0x80160634
-
+.definelabel D_8019CFC0, 0x8019CFC0
+.definelabel osPfsInitPak, 0x800E4740;
 .definelabel func_800CB630, 0x800CB630;
 .definelabel func_800CBA4C, 0x800CBA4C;
 .definelabel func_800CC270, 0x800CC270;

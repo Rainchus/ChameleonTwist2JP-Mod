@@ -33,6 +33,11 @@ s32 togglePowerupLock(void) {
     return 1;
 }
 
+s32 toggleRebootOnCrash(void) {
+    toggles[TOGGLE_REBOOT_ON_CRASH] ^= 1;
+    return 1;
+}
+
 s32 toggleDisplayFlutterFrames(void) {
     toggles[TOGGLE_DISPLAY_FLUTTER_FRAMES] ^= 1;
     return 1;
@@ -87,6 +92,11 @@ s32 ToggleTimerIfDisplayedZoneChange(void) {
 
 u32 gTimer = 0;
 u32 gTimerCopy = 0;
+
+s32 ToggleShowInputs(void) {
+    toggles[TOGGLE_DISPLAY_INPUTS] ^= 1;
+    return 1;     
+}
 
 void TimerTickMainC(void) {
     gTimer++;
@@ -170,6 +180,7 @@ char** page0Strings[] = {
     ONAndOFF, //Display speed
     ONAndOFF, //Display position
     ONAndOFF, //Display flutter frames
+    ONAndOFF, //Reboot on crash
     blankEntry, //save settings option
 };
 
@@ -189,27 +200,31 @@ char** page3Strings[] = {
     ONAndOFF,
     ONAndOFF,
     ONAndOFF,
+    ONAndOFF,
 };
 
 menuPage page0 = {
-    4, //optionCount
+    5, //optionCount
     0, //pageIndex
     { //options
-        "Show Speed",
-        "Show Position",
-        "Show Flutter Frames",
-        "Save Settings"
+        "Speed",
+        "Position",
+        "Show Flutter",
+        "Reboot on Crash",
+        "Save Settings",
     },
     { //menuProc
         &toggleDisplaySpeed,
         &toggleDisplayPosition,
         &toggleDisplayFlutterFrames,
+        &toggleRebootOnCrash,
         &SaveSettings,
     },
     { //flags
         TOGGLE_DISPLAY_SPEED,
         TOGGLE_DISPLAY_POSITION,
         TOGGLE_DISPLAY_FLUTTER_FRAMES,
+        TOGGLE_REBOOT_ON_CRASH,
         -1,
     },
 
@@ -261,22 +276,25 @@ menuPage page2 = {
 };
 
 menuPage page3 = {
-    3, //optionCount
+    4, //optionCount
     3, //pageIndex
     { //options
         "Timer Display",
         "Show Time on Void",
-        "Timer 2",
+        "Show Time on Zone Change",
+        "Show Inputs",
     },
     { //menuProc
         &ToggleTimer,
         &ToggleTimerIfDisplayOnVoid,
         &ToggleTimerIfDisplayedZoneChange,
+        &ToggleShowInputs,
     },
     { //flags
         TOGGLE_TIMER_MAIN,
         TOGGLE_TIMER_DISPLAY_VOID,
-        TOGGLE_TIMER_DISPLAY_ZONE_CHANGE
+        TOGGLE_TIMER_DISPLAY_ZONE_CHANGE,
+        TOGGLE_DISPLAY_INPUTS
     },
 
     page3Strings,
@@ -367,7 +385,7 @@ void pageMainDisplay(s32 currPageNo, s32 currOptionNo) {
         SetDefaultTextParametersWithColor(&Green, menu.xPos + (strLength * X_COORD_PER_LETTER), menu.yPos);
 
         _bzero(&menuOptionBuffer, sizeof(menuOptionBuffer));
-        _sprintf(menuOptionBuffer, currPage->selectionText[i][toggles[currPage->flags[i]]]);
+        _sprintf(menuOptionBuffer, "%s", currPage->selectionText[i][toggles[currPage->flags[i]]]);
 
         //print ON/OFF or other text next to option
         printDebugText(menuOptionBuffer);

@@ -4,6 +4,7 @@
 #include "../include/ffconf.h"
 #include <stdarg.h>
 
+f32 RandomF(void);
 extern s32 gTongueLength;
 extern s32 gTongueState;
 extern Gfx Entity_YellowBlock_Render[];
@@ -74,6 +75,7 @@ extern s32 savestate1Size;
 s32 savestate2Size = 0;
 s32 savestate3Size = 0;
 volatile s32 isSaveOrLoadActive = 0;
+volatile s32 isLoadPending = 0;
 s32 saveOrLoadStateMode = 0;
 
 TextColor RedOrange = {
@@ -483,7 +485,7 @@ void printCurrentSpeed(void) {
     _bzero(buffer, sizeof(buffer));
     SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
 
-    _sprintf(buffer, "%2.2f", gPlayerActors[0].magnitude);
+    _sprintf(buffer, "%2.2f", gPlayerActors[0].stickMagnitude);
     printDebugText(buffer);
 }
 
@@ -507,7 +509,7 @@ void PrintTimer(void) {
 
     _bzero(buffer, sizeof(buffer));
     SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
-    _sprintf(buffer, "%2.2f", gPlayerActors[0].magnitude);
+    _sprintf(buffer, "%2.2f", gPlayerActors[0].stickMagnitude);
     printDebugText(buffer);
 }
 
@@ -885,6 +887,159 @@ extern s16 D_800EAF64;
 extern s16 D_800FF20E;
 extern Temp D_80160808;
 
+typedef struct UnkDebug {
+/* 0x00 */ u16 unk_00;
+/* 0x02 */ char unk_02[4];
+/* 0x06 */ u16 unk_06;
+} UnkDebug;
+
+extern s16 D_800EAE64;
+extern s16 D_800EAE70;
+extern s16 D_800EAE74;
+extern UnkDebug D_800FF1C0;
+extern u8 D_80160659;
+
+
+
+//main loop function
+void func_8002956C_Hook(void) {
+    #define MAIN_GAME_STEP 3
+    #define INTRO_SCENES_STEP 4
+    #define DEBUG_MENU_STEP 12
+    #define NEW_GAME_CUTSCENE_STEP 15
+    #define GAME_SELECTION_STEP 18 //title screen, file select, training room select, etc
+    
+    RandomF();
+    func_800293F0_Hook2();
+    if ((D_800EAE64 != 0) && (D_800FF1C0.unk_00 & 0x1000) && (D_800FF1C0.unk_06 & 0x8000) && (D_800EAF60 != 0xC)) {
+        func_800293F0(0xC);
+        return;
+    }
+    if (D_800EAE70 != 0) {
+        D_80160648 = 0xFF;
+    }
+    if (D_800EAE74 != 0) {
+        D_80160659 = 0xFF;
+    }
+    func_800294A8();
+    perFrameCFunction();
+    switch (D_800EAF60) {
+    case 0: //initialize game
+        func_800297A0();
+        return;
+    case 1:
+        func_80029860();
+        return;
+    case MAIN_GAME_STEP:
+        func_80028C00();
+        return;
+    case INTRO_SCENES_STEP:
+        func_8003D1B8();
+        return;
+    case 22:
+        func_802023F8_212A18();
+        return;
+    case 21:
+        func_80200E88_2114A8();
+        return;
+    case 8:
+        func_80202564_20AAD4();
+        return;
+    case 2:
+        if (isLoadPending == 1) {
+            //savestate load is pending, try loading
+            isSaveOrLoadActive = 1;
+            isLoadPending = 0;
+            osCreateThread(&gCustomThread.thread, 255, (void*)loadstateMain, NULL,
+                    gCustomThread.stack + sizeof(gCustomThread.stack), 255);
+            osStartThread(&gCustomThread.thread);
+            stateCooldown = 5;
+        }
+
+        if (--isLoadPending < 0) {
+            isLoadPending = 0;
+        }
+
+        func_80204EEC_20D45C();
+        return;
+    case 7:
+        func_80204060_20C5D0();
+        return;
+    case 20:
+        func_802005E8_210C08();
+        return;
+    case 9:
+        func_802063AC_20E91C();
+        return;
+    case 11:
+        func_802019CC_209F3C();
+        return;
+    case 10:
+        func_80200B18_209088();
+        return;
+    case DEBUG_MENU_STEP:
+        func_80203640_20BBB0();
+        return;
+    case NEW_GAME_CUTSCENE_STEP:
+        func_800AC440();
+        return;
+    case 16:
+        func_800AC710();
+        return;
+    case 19:
+        func_80201908_211F28();
+        return;
+    case 13:
+        func_801FFE88_2083F8();
+        return;
+    case GAME_SELECTION_STEP: //includes JSS logo start up
+        func_800BE480();
+        return;
+    case 6:
+        func_8007BB40();
+        return;
+    case 23:
+        func_8007E400();
+        return;
+    case 24:
+        func_80202B08_213128();
+        return;
+    default:
+        return;
+    }
+}
+
+extern OSMesgQueue D_8019CFC0;
+
+typedef struct Unk {
+    s32 unk_00;
+    void* unk_04;
+    void* unk_08;
+} Unk;
+
+typedef struct Unk2 {
+/* 0x00 */ OSPfs* unk_00;
+/* 0x04 */ char unk_04[4];
+/* 0x08 */ s32 pakInitResult;
+/* 0x0C */ s32 pakInitResultCopy;
+} Unk2;
+
+void func_800D6290_Hook(Unk* arg0) {
+    s32 temp_v0;
+    Unk2* temp_v1;
+
+    temp_v1 = arg0->unk_08;
+    temp_v1->pakInitResultCopy = 0;
+    temp_v0 = osPfsInitPak(&D_8019CFC0, temp_v1->unk_00, temp_v1->unk_00->channel);
+    temp_v0 = 1; //always set controller pak to be considered not in so warning screen appears
+    if (temp_v0 == 0) {
+        temp_v1->pakInitResultCopy = 1;
+    }
+    
+    temp_v1->pakInitResult = temp_v0;
+    osSendMesg(arg0->unk_04, NULL, 1);    
+}
+
 //load debug menu and set gamemode
 // void func_800293F0_Hook(s32 arg0) {
 //     D_800EAF60 = arg0;
@@ -922,23 +1077,9 @@ void func_800293F0_Hook2(void) {
         osStartThread(&gCustomThread.thread);
         stateCooldown = 5;
     } else if (currentlyPressedButtons & R_JPAD) {
-        // D_800EAF60 = savestateGameMode; //set game mode
-        // D_800EAF64 = 0;
-        // func_800E8C00(&D_80160808, 0, 0x10);
-        // func_8003C9DC();
-        // // if (func_800D4DE0(0) == 0) {
-        // //     func_800D6160();
-        // // }
-        // D_800EAD5C = 0;
-        // D_800FF20E = 0;
-
-        isSaveOrLoadActive = 1;
-        osCreateThread(&gCustomThread.thread, 255, (void*)loadstateMain, NULL,
-                gCustomThread.stack + sizeof(gCustomThread.stack), 255);
-        osStartThread(&gCustomThread.thread);
-        currentlyPressedButtons = 0;
-        stateCooldown = 5;
-        while (isSaveOrLoadActive == 1) {}
+        isLoadPending = 6;
+        D_800EAF60 = 0; //set game mode to boot game mode
+        D_800EAF64 = 0;
     }
 }
 
@@ -1011,7 +1152,8 @@ __attribute__((aligned(16))) s8 toggles[] = {
     //page 0
     1, // TOGGLE_DISPLAY_SPEED
     0, // TOGGLE_DISPLAY_POSITION
-    0, // TOGGLE_DISPLAY_FLUTTER_FRAMES
+    1, // TOGGLE_DISPLAY_FLUTTER_FRAMES
+    1, // TOGGLE_REBOOT_ON_CRASH
 
     //page 1
     1, // TOGGLE_POWERUP_LOCK
@@ -1024,6 +1166,7 @@ __attribute__((aligned(16))) s8 toggles[] = {
     1, // TOGGLE_TIMER_MAIN
     1, // TOGGLE_TIMER_DISPLAY_VOID
     1, // TOGGLE_TIMER_DISPLAY_ZONE_CHANGE
+    1, // TOGGLE_DISPLAY_INPUTS
 };
 
 s32 SaveSettings(void) {
@@ -1033,7 +1176,53 @@ s32 SaveSettings(void) {
     fileres = f_open(&sdsavefile, path, FA_OPEN_ALWAYS | FA_WRITE | FA_READ);
     f_write(&sdsavefile, toggles, ALIGN(sizeof(toggles), 4), &filebytesread);
     f_close(&sdsavefile);
-    return 1; 
+    return 1;
+}
+
+typedef struct RebootData {
+    /* 0x000 */ OSThread thread;
+    /* 0x1B0 */ char stack[0x800];
+    /* 0x9B0 */ OSMesgQueue queue;
+    /* 0x9C8 */ OSMesg mesg;
+    /* 0x9CC */ u16* frameBuf;
+    /* 0x9D0 */ u16 width;
+    /* 0x9D2 */ u16 height;
+} RebootData; // size = 0x9D4
+
+RebootData gReboot = {0};
+
+void crash_reboot_thread(void) {
+    OSMesg mesg;
+    OSThread* faultedThread;
+
+    osSetEventMesg(OS_EVENT_CPU_BREAK, &gReboot.queue, (OSMesg)4);
+    osSetEventMesg(OS_EVENT_FAULT, &gReboot.queue, (OSMesg)5);
+    osSetEventMesg(OS_EVENT_SP_BREAK, &gReboot.queue, (OSMesg)6);
+
+    do {
+        osRecvMesg(&gReboot.queue, &mesg, OS_MESG_BLOCK);
+        faultedThread = crash_screen_get_faulted_thread();
+    } while (faultedThread == NULL);
+
+    osStopThread(faultedThread);
+
+    if (toggles[TOGGLE_REBOOT_ON_CRASH]) {
+        reboot(0, 1, 1, 0x3F); //reboot the game after it crashed
+    }
+
+    while (TRUE) {
+        infiniteLoop();
+        //crash_screen_sleep(1000);
+    }
+
+    //wait on a break
+}
+
+void reboot_on_crash_init(void) {
+    osCreateMesgQueue(&gReboot.queue, &gReboot.mesg, 1);
+    osCreateThread(&gReboot.thread, 252, crash_reboot_thread, NULL,
+                   gReboot.stack + sizeof(gReboot.stack), 0x81);
+    osStartThread(&gReboot.thread);
 }
 
 void cBootFunction(void) { //ran once on boot
@@ -1042,6 +1231,7 @@ void cBootFunction(void) { //ran once on boot
     FRESULT fileres;
 
     crash_screen_init();
+    //reboot_on_crash_init();
 
     //initialize SD card from everdrive, create test file, close
     cart_init();
@@ -1227,8 +1417,8 @@ void ifPullParasolPrint(void) {
             parasolPulled = 1;
         }
 
-        if (gPlayerActors[0].magnitude != 0.0f && parasolPullSpeed == 0.0f) {
-            parasolPullSpeed = gPlayerActors[0].magnitude;
+        if (gPlayerActors[0].stickMagnitude != 0.0f && parasolPullSpeed == 0.0f) {
+            parasolPullSpeed = gPlayerActors[0].stickMagnitude;
         }
     } else {
         parasolPulled = 0;

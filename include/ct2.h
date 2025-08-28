@@ -63,19 +63,76 @@ typedef struct CustomThread {
 // /* 0x888 */ f32 speed;
 // } PlayerActor;
 
-typedef struct PlayerActor {
-    /* 0x00 */ Vec3f pos;
-    /* 0x0C */ f32 angle1;
-    /* 0x10 */ char unk_10[8];
-    /* 0x18 */ f32 magnitude; //speedNoDirection
-    /* 0x1C */ f32 unk_1C;
-    /* 0x20 */ char unk_20[4];
-    /* 0x24 */ f32 velocity; //speedWithDirection
-} PlayerActor; //unknown size
+// typedef struct PlayerActor {
+//     /* 0x00 */ Vec3f pos;
+//     /* 0x0C */ f32 angle1;
+//     /* 0x10 */ char unk_10[8];
+//     /* 0x18 */ f32 magnitude; //speedNoDirection
+//     /* 0x1C */ f32 unk_1C;
+//     /* 0x20 */ char unk_20[4];
+//     /* 0x24 */ f32 velocity; //speedWithDirection
+// } PlayerActor; //unknown size
 
-//extern PlayerActor* gPlayerActor; //80187290
+// //extern PlayerActor* gPlayerActor; //80187290
 
-extern PlayerActor gPlayerActors[4];
+typedef struct Tongue {
+    Vec3f tongue[70];
+} Tongue;
+typedef struct UnkPlayer {
+    void* actor;
+    s32 timer;
+} UnkPlayer;
+
+typedef struct Player {
+                struct Player* player;
+                Tongue tongueData;
+                char unk34C[0x2F8];
+                UnkPlayer unk644[32];
+                char unk64C[0x100];
+                s32 unk844;
+                char pad848[4];
+                s32 unk84C;
+                s32 unk850;
+                s32 unk854;
+                s32 unk858;
+                s32 unk85C;
+                s32 unk860;
+                char pad864[0xC];
+                Vec3f pos;
+                f32 angle1;
+                char unk_880[8];
+                f32 stickMagnitude;
+                f32 unk_88C;
+                f32 unk890;
+                f32 velocity;
+                char unk898[0xC];
+                f32 unk8A4;
+                s32 unk8A8;
+                s32 unk8AC;
+                s32 unk8B0;
+                s32 unk8B4;
+                s32 unk8B8;
+                s8 unk8BC[8];
+                s16 unk8C4;
+                char pad8C6[2];
+                s32 unk8C8;
+                s8 unk8CC[4];
+                s32 unk8D0;
+                s32 unk8D4;
+                s8 unk8D8[0x54];
+                s16 hp;
+                char pad92E[0xE];
+                s32 unk93C;
+                s8 unk940[6];
+                s16 unk946;
+                s8 unk948[4];
+                s16 unk94C;
+                s8 unk94E[4];
+                s16 unk952;
+                char unk_954[0x28];
+} Player;
+
+extern Player gPlayerActors[4];
 
 extern int getStatusRegister(void); //returns status reg
 extern int setStatusRegister(s32); //returns status reg
@@ -222,6 +279,7 @@ enum Toggles {
     TOGGLE_DISPLAY_SPEED,
     TOGGLE_DISPLAY_POSITION,
     TOGGLE_DISPLAY_FLUTTER_FRAMES,
+    TOGGLE_REBOOT_ON_CRASH,
 
     //page 1
     TOGGLE_POWERUP_LOCK,
@@ -233,7 +291,8 @@ enum Toggles {
     //page 3
     TOGGLE_TIMER_MAIN,
     TOGGLE_TIMER_DISPLAY_VOID,
-    TOGGLE_TIMER_DISPLAY_ZONE_CHANGE
+    TOGGLE_TIMER_DISPLAY_ZONE_CHANGE,
+    TOGGLE_DISPLAY_INPUTS
 };
 
 enum TongueState {

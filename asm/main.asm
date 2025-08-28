@@ -9,6 +9,7 @@
 .org 0x80400000
 PAYLOAD_START_RAM:
 .include "asm\custom_asm.s"
+.include "asm\reboot.s"
 .importobj "obj\crash.o"
 .importobj "obj\lib.o"
 .importobj "obj\lz4.o"

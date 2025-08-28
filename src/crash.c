@@ -319,6 +319,8 @@ void crash_screen_thread_entry(void* unused) {
 
     osSetEventMesg(OS_EVENT_CPU_BREAK, &gCrashScreen.queue, (OSMesg)1);
     osSetEventMesg(OS_EVENT_FAULT, &gCrashScreen.queue, (OSMesg)2);
+    //only caught for game reboots
+    osSetEventMesg(OS_EVENT_SP_BREAK, &gCrashScreen.queue, (OSMesg)3);
 
     do {
         osRecvMesg(&gCrashScreen.queue, &mesg, OS_MESG_BLOCK);
@@ -326,7 +328,13 @@ void crash_screen_thread_entry(void* unused) {
     } while (faultedThread == NULL);
 
     osStopThread(faultedThread);
-    crash_screen_draw(faultedThread);
+
+    if (toggles[TOGGLE_REBOOT_ON_CRASH]) {
+        reboot(0, 1, 1, 0x3F); //reboot the game after it crashed
+    } else {
+        crash_screen_draw(faultedThread);
+    }
+    
 
     while (TRUE) {
         infiniteLoop();
