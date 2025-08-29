@@ -4,7 +4,10 @@
 #include "../include/ffconf.h"
 #include <stdarg.h>
 
+s32 g_freeze_frames = 0;
+
 f32 RandomF(void);
+void perFrameCFunction(void);
 extern s32 gTongueLength;
 extern s32 gTongueState;
 extern Gfx Entity_YellowBlock_Render[];
@@ -485,7 +488,7 @@ void printCurrentSpeed(void) {
     _bzero(buffer, sizeof(buffer));
     SetDefaultTextParametersWithColor(&RedOrange, textPos.xPos, textPos.yPos);
 
-    _sprintf(buffer, "%2.2f", gPlayerActors[0].stickMagnitude);
+    _sprintf(buffer, "%2.2f", gPlayerSpeed);
     printDebugText(buffer);
 }
 
@@ -1078,6 +1081,7 @@ void func_800293F0_Hook2(void) {
         stateCooldown = 5;
     } else if (currentlyPressedButtons & R_JPAD) {
         isLoadPending = 6;
+        g_freeze_frames = 7;
         D_800EAF60 = 0; //set game mode to boot game mode
         D_800EAF64 = 0;
     }
@@ -1604,3 +1608,36 @@ void func_80035E00_Hook(unkLookatStruct* arg0) { //renders the world
     //added code
     //gSPDisplayList(gMainGfxPosPtr++, Entity_YellowBlock_Render);
 }
+
+extern s16 D_80101410[3];
+
+typedef struct UnkViBuff {
+    char unk_00[0x0C];
+    void* buf;
+} UnkViBuff;
+
+// void func_80026604_Hook(UnkViBuff* arg0) {
+//     s32 sp24;
+//     s32 i;
+//     s32 sp1C;
+
+//     sp24 = -1;
+//     sp1C = 0;
+    
+//     // Only swap buffer if not frozen
+//     if (g_freeze_frames <= 0) {
+//         osViSwapBuffer(arg0->buf);
+//         osViSetSpecialFeatures(0x40U);
+//         for (i = 0; i < 3; i++) {
+//             if (sp24 < D_80101410[i]) {
+//                 sp24 = D_80101410[i];
+//                 sp1C = i;
+//             }        
+//         }
+//         D_80101410[sp1C] = 0;
+//     } else {
+//         g_freeze_frames--; // Decrement freeze counter
+//     }
+    
+
+// }

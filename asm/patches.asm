@@ -157,3 +157,11 @@ dma_copy:
 .org 0x800D6290
     J func_800D6290_Hook
     NOP
+
+//.org 0x80026604
+    //J func_80026604_Hook
+    //NOP
+
+.org 0x800265D4
+    J checkFramebufferUpdate
+    ADDIU a3, r0, 0x0001

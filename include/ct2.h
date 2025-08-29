@@ -83,54 +83,58 @@ typedef struct UnkPlayer {
     s32 timer;
 } UnkPlayer;
 
+
+extern f32 gPlayerSpeed;
+
+//TODO: this is all kinds of undocumented and probably wrong
 typedef struct Player {
-                struct Player* player;
-                Tongue tongueData;
-                char unk34C[0x2F8];
-                UnkPlayer unk644[32];
-                char unk64C[0x100];
-                s32 unk844;
-                char pad848[4];
-                s32 unk84C;
-                s32 unk850;
-                s32 unk854;
-                s32 unk858;
-                s32 unk85C;
-                s32 unk860;
-                char pad864[0xC];
-                Vec3f pos;
-                f32 angle1;
-                char unk_880[8];
-                f32 stickMagnitude;
-                f32 unk_88C;
-                f32 unk890;
-                f32 velocity;
-                char unk898[0xC];
-                f32 unk8A4;
-                s32 unk8A8;
-                s32 unk8AC;
-                s32 unk8B0;
-                s32 unk8B4;
-                s32 unk8B8;
-                s8 unk8BC[8];
-                s16 unk8C4;
-                char pad8C6[2];
-                s32 unk8C8;
-                s8 unk8CC[4];
-                s32 unk8D0;
-                s32 unk8D4;
-                s8 unk8D8[0x54];
-                s16 hp;
-                char pad92E[0xE];
-                s32 unk93C;
-                s8 unk940[6];
-                s16 unk946;
-                s8 unk948[4];
-                s16 unk94C;
-                s8 unk94E[4];
-                s16 unk952;
-                char unk_954[0x28];
-} Player;
+    /* 0x000 */ struct Player* player;
+    /* 0x004 */ Tongue tongueData;
+    /* 0x34C */ char unk34C[0x2F8];
+    /* 0x644 */ UnkPlayer unk644[32]; //
+    /* 0x64C */ char unk64C[0x100];
+    /* 0x844 */ s32 unk844;
+    /* 0x848 */ char pad848[4];
+    /* 0x84C */ s32 unk84C;
+    /* 0x850 */ s32 unk850;
+    /* 0x854 */ s32 unk854;
+    /* 0x858 */ s32 unk858;
+    /* 0x85C */ s32 unk85C;
+    /* 0x860 */ s32 unk860;
+    /* 0x864 */ char pad864[0xC];
+    /* 0x870 */ Vec3f pos;
+    /* 0x87C */ f32 angle1;
+    /* 0x880 */ char unk_880[8];
+    /* 0x888 */ f32 stickMagnitude;
+    /* 0x88C */ f32 unk_88C;
+    /* 0x890 */ f32 unk890;
+    /* 0x894 */ f32 velocity; //speedWithDirection
+    /* 0x898 */ char unk898[0xC];
+    /* 0x8A4 */ f32 unk8A4;
+    /* 0x8A8 */ s32 unk8A8;
+    /* 0x8AC */ s32 unk8AC;
+    /* 0x8B0 */ s32 unk8B0;
+    /* 0x8B4 */ s32 unk8B4;
+    /* 0x8B8 */ s32 unk8B8;
+    /* 0x8BC */ s8 unk8BC[8];
+    /* 0x8C4 */ s16 unk8C4;
+    /* 0x8C6 */ char pad8C6[2];
+    /* 0x8C8 */ s32 unk8C8;
+    /* 0x8CC */ s8 unk8CC[4];
+    /* 0x8D0 */ s32 unk8D0;
+    /* 0x8D4 */ s32 unk8D4;
+    /* 0x8D8 */ s8 unk8D8[0x54];
+    /* 0x92C */ s16 hp;
+    /* 0x92E */ char pad92E[0xE];
+    /* 0x93C */ s32 unk93C;
+    /* 0x940 */ s8 unk940[6];
+    /* 0x946 */ s16 unk946;
+    /* 0x948 */ s8 unk948[4];
+    /* 0x94C */ s16 unk94C;
+    /* 0x94E */ s8 unk94E[4];
+    /* 0x952 */ s16 unk952;
+    /* 0x954 */ char unk_954[0x28];
+} Player; /* size = 0x97C */
 
 extern Player gPlayerActors[4];
 

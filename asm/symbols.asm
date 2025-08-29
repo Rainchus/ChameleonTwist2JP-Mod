@@ -166,7 +166,7 @@
 .definelabel D_800F1C54, 0x800F1C54;
 .definelabel D_800F1C70, 0x800F1C70;
 .definelabel func_800CB5C0, 0x800cb5c0;
-
+.definelabel osViSetSpecialFeatures, 0x800E4000;
+.definelabel D_80101410, 0x80101410
 .definelabel UnlockedCostumes, 0x8016451A;
-
-//mainThread 8001C81C
+.definelabel gPlayerSpeed, 0x80187B18

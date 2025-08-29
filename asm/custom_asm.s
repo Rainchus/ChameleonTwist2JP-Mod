@@ -557,3 +557,25 @@ resetStageTimer:
     LW a0, 0x0018 (sp)
     J 0x800B3EDC
     ADDIU v0, r0, 0x0001
+
+checkFramebufferUpdate:
+    LI t0, g_freeze_frames
+    LW t1, 0x0000 (t0)
+    ADDIU t1, t1, -1
+    BLEZL t1, setZero
+    ADDU t1, r0, r0
+    setZero:
+    SW t1, 0x0000 (t0) //set new g_freeze_frames
+
+
+    BNEZ t1, skipFrameBufferUpdate
+     NOP
+    //otherwise, framebuffer updates
+    JAL 0x800D4644
+     NOP
+    LUI a0, 0x800F
+    JAL 0x800262E8
+     LW a0, 0xAD60 (a0)
+    skipFrameBufferUpdate:
+    J 0x800265E8
+     NOP
