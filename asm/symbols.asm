@@ -170,3 +170,9 @@
 .definelabel D_80101410, 0x80101410
 .definelabel UnlockedCostumes, 0x8016451A;
 .definelabel gPlayerSpeed, 0x80187B18
+.definelabel D_801C1BEC, 0x801C1BEC
+.definelabel osContStartReadData, 0x800DBFC0
+.definelabel func_800D498C, 0x800D498C
+.definelabel osContGetReadData, 0x800DC044
+.definelabel func_800D49B8, 0x800D49B8
+.definelabel gSavedButtonInputs, 0x80757830

@@ -323,6 +323,19 @@ enum PowerUpIDs {
     POWER_NOTHING = 7
 };
 
+typedef struct {
+	u16     button;
+	s8      stick_x;		/* -80 <= stick_x <= 80 */
+	s8      stick_y;		/* -80 <= stick_y <= 80 */
+} OSContPadPacked;
+
+typedef struct InputRecordingHeader {
+    s32 frameCountTotal;
+    OSContPadPacked buttonInputs[];
+} InputRecordingHeader;
+
+extern InputRecordingHeader gSavedButtonInputs; //can record for 172,532 frames or 5,571 seconds or 95 minutes
+
 extern s32 currPageNo;
 extern s32 currOptionNo;
 extern s32 isMenuActive;

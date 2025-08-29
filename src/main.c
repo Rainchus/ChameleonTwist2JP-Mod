@@ -4,6 +4,12 @@
 #include "../include/ffconf.h"
 #include <stdarg.h>
 
+s32 savestateButtonInputsIterator = 0;
+s32 savestategInputMode = 0;
+
+extern s32 buttonInputsIterator;
+extern s32 gInputMode;
+
 s32 g_freeze_frames = 0;
 
 f32 RandomF(void);
@@ -175,7 +181,7 @@ void pauseUntilDMANotBusy(void) {
 	}
 }
 
-#define ramAddrSavestateDataSlot1 (void*)0x804C0000
+#define ramAddrSavestateDataSlot1 (void*)0x80440000 //ends at 0x80757830
 #define L_JPAD_CASE 0
 #define U_JPAD_CASE 1
 #define R_JPAD_CASE 2
@@ -280,6 +286,9 @@ void loadstateMain(void) {
         customMemCpy((void*)ramStartAddr, ramAddrSavestateDataSlot1, (u32)ramEndAddr - (u32)ramStartAddr);
         calls = callCopy;
         gTimer = gTimerCopy;
+
+        buttonInputsIterator = savestateButtonInputsIterator;
+        gInputMode = savestategInputMode;
         osInvalICache((void*)0x80000000, 0x4000);
     }
 
@@ -316,6 +325,12 @@ void savestateMain(void) {
     callCopy = calls;
     gTimerCopy = gTimer;
     savestateGameMode = gGameMode;
+
+    savestateButtonInputsIterator = buttonInputsIterator;
+    savestategInputMode = gInputMode;
+
+
+
     //savestate1Size = ramEndAddr - ramStartAddr;
 
     __osRestoreInt(mask);
@@ -949,6 +964,10 @@ void func_8002956C_Hook(void) {
         func_80202564_20AAD4();
         return;
     case 2:
+        if (gInputMode == 2 || gInputMode == 3) {
+            func_80204EEC_20D45C();
+            return;
+        }
         if (isLoadPending == 1) {
             //savestate load is pending, try loading
             isSaveOrLoadActive = 1;
@@ -1074,11 +1093,13 @@ void func_800293F0_Hook2(void) {
     }
 
     if (currentlyPressedButtons & L_JPAD) {
-        isSaveOrLoadActive = 1;
-        osCreateThread(&gCustomThread.thread, 255, (void*)savestateMain, NULL,
-                gCustomThread.stack + sizeof(gCustomThread.stack), 255);
-        osStartThread(&gCustomThread.thread);
-        stateCooldown = 5;
+        if (gInputMode != 2 || gInputMode != 3) {
+            isSaveOrLoadActive = 1;
+            osCreateThread(&gCustomThread.thread, 255, (void*)savestateMain, NULL,
+                    gCustomThread.stack + sizeof(gCustomThread.stack), 255);
+            osStartThread(&gCustomThread.thread);
+            stateCooldown = 5;            
+        }
     } else if (currentlyPressedButtons & R_JPAD) {
         isLoadPending = 6;
         g_freeze_frames = 6;
@@ -1140,7 +1161,8 @@ void print_fps(s32 x, s32 y, TextColor* color) {
 void hookAt800CBDC0(void);
 
 FATFS FatFs = {0};
-char *path = "ct2.bin"; //example file for SD card writing
+char *path = "ct2.bin"; //settings file
+char *pathRecording = "ct2R.bin"; //recording file
 FIL sdsavefile = {0};
 
 
@@ -1181,6 +1203,34 @@ s32 SaveSettings(void) {
     f_write(&sdsavefile, toggles, ALIGN(sizeof(toggles), 4), &filebytesread);
     f_close(&sdsavefile);
     return 1;
+}
+
+s32 SaveRecording(void) {
+    UINT filebytesread;
+    FRESULT fileres;
+    s32 fileSize;
+
+    fileres = f_open(&sdsavefile, pathRecording, FA_OPEN_ALWAYS | FA_WRITE | FA_READ);
+    fileSize = gSavedButtonInputs.frameCountTotal * 4;
+    //if it's greater than this, the file size was likely uninitialized
+    if (fileSize > 0x100000) {
+        f_close(&sdsavefile);
+    } else {
+        f_write(&sdsavefile, (void*)gSavedButtonInputs.frameCountTotal, ALIGN(sizeof(toggles), 4), &filebytesread);
+        f_close(&sdsavefile);
+    }
+    return 1;
+}
+
+s32 ImportRecording(void) {
+    #define MAX_FILE_SIZE 0xA87D0
+    UINT filebytesread;
+    FRESULT fileres;
+
+    fileres = f_open(&sdsavefile, pathRecording, FA_OPEN_ALWAYS | FA_WRITE | FA_READ);
+    f_read(&sdsavefile, (void*)gSavedButtonInputs.frameCountTotal, MAX_FILE_SIZE, &filebytesread);
+    f_close(&sdsavefile);
+    return 1;    
 }
 
 typedef struct RebootData {
@@ -1641,3 +1691,58 @@ typedef struct UnkViBuff {
     
 
 // }
+
+extern s32 D_801C1BEC;
+
+s32 buttonInputsIterator = 0;
+s32 gInputMode = 0;
+
+void func_800D49E4_Hook(OSContPad* arg0, s32 arg1) {
+    OSContPad prev;
+
+    osContStartReadData(&D_8019CFC0);
+    osRecvMesg(&D_8019CFC0, 0, 1);
+    if (!(arg1 & D_801C1BEC)) {
+        func_800D498C(); //send mesg for input
+        
+        switch (gInputMode) {
+            case 0:
+                osContGetReadData(arg0);
+                break;
+            case 1: //recording
+                osContGetReadData(arg0);
+                gSavedButtonInputs.buttonInputs[buttonInputsIterator].button = arg0->button;
+                gSavedButtonInputs.buttonInputs[buttonInputsIterator].stick_x = arg0->stick_x;
+                gSavedButtonInputs.buttonInputs[buttonInputsIterator].stick_y = arg0->stick_y;
+                buttonInputsIterator++;
+                gSavedButtonInputs.frameCountTotal = buttonInputsIterator;
+                break;
+            case 2: //playback
+                osContGetReadData(arg0);
+                prev = *arg0;
+                arg0->button = gSavedButtonInputs.buttonInputs[buttonInputsIterator].button;
+                arg0->stick_x = gSavedButtonInputs.buttonInputs[buttonInputsIterator].stick_x;
+                arg0->stick_y = gSavedButtonInputs.buttonInputs[buttonInputsIterator].stick_y;
+                buttonInputsIterator++;
+                if (buttonInputsIterator >= gSavedButtonInputs.frameCountTotal) {
+                    gInputMode = 0; //turn playback off, resume normal gameplay
+                }
+                if (prev.button & 0x400) { //DPAD_DOWN
+                    gInputMode = 1; //swap to recording
+                }
+                break;
+            case 3: //playback then append
+                arg0->button = gSavedButtonInputs.buttonInputs[buttonInputsIterator].button;
+                arg0->stick_x = gSavedButtonInputs.buttonInputs[buttonInputsIterator].stick_x;
+                arg0->stick_y = gSavedButtonInputs.buttonInputs[buttonInputsIterator].stick_y;
+                buttonInputsIterator++;
+                //if we have reached end of movie, swap to recording mode
+                if (gSavedButtonInputs.frameCountTotal == buttonInputsIterator) {
+                    gInputMode = 1;
+                }
+                break;
+        }
+
+        func_800D49B8(); //recv mesg for input
+    }
+}

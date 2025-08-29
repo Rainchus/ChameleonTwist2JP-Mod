@@ -165,3 +165,7 @@ dma_copy:
 .org 0x800265D4
     J checkFramebufferUpdate
     ADDIU a3, r0, 0x0001
+
+.org 0x800D49E4
+    J func_800D49E4_Hook
+    NOP

@@ -4,7 +4,9 @@
 #define UNITS_BETWEEN_LINES 14
 #define X_COORD_PER_LETTER 9
 
-void SaveSettings(void);
+s32 SaveSettings(void);
+s32 SaveRecording(void);
+s32 ImportRecording(void);
 
 typedef struct menuPage {
     /* 0x00 */ s32 optionCount;
@@ -203,6 +205,11 @@ char** page3Strings[] = {
     ONAndOFF,
 };
 
+char** page4Strings[] = {
+    blankEntry, //export inputs option
+    blankEntry, //export inputs option
+};
+
 menuPage page0 = {
     5, //optionCount
     0, //pageIndex
@@ -281,7 +288,7 @@ menuPage page3 = {
     { //options
         "Timer Display",
         "Show Time on Void",
-        "Show Time on Zone Change",
+        "Show Time on Zone",
         "Show Inputs",
     },
     { //menuProc
@@ -300,11 +307,31 @@ menuPage page3 = {
     page3Strings,
 };
 
+menuPage page4 = {
+    2, //optionCount
+    4, //pageIndex
+    { //options
+        "Export Recording",
+        "Import Recording",
+    },
+    { //menuProc
+        &SaveRecording,
+        &ImportRecording,
+    },
+    { //flags
+        -1,
+        -1,
+    },
+
+    page4Strings,
+};
+
 menuPage* pageList[] = {
     &page0,
     &page1,
     &page2,
     &page3,
+    &page4,
 };
 
 s32 pageListTotal = ARRAY_COUNT(pageList);

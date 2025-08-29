@@ -368,61 +368,118 @@ zoneSetCheck:
 
 
 copiedHookCode:
-JAL cBootFunction
-NOP
-LUI a1, 0x8010
-ADDIU a1, a1, 0xF230
-OR a0, s2, r0
-JAL osCreateMesgQueue
-ADDIU a2, r0, 1
+    //gInputMode
 
-LUI a0, 0x8002
-JAL 0x800D4040
-ADDIU a0, a0, 0x6604
-OR a0, s2, r0
-ADDIU a1, r0, 1
-JAL osSendMesg
-OR a2, r0, r0
-JAL 0x80026080
-NOP
-LUI at, 0x42C8
-LUI t6, 0x8000
-MTC1 at, f4
-LW t6, 0x0300 (t6)
-LUI at, 0x8016
-LUI t8, 0x800F
-BNEZ t6, copiedHookLabel0
-SWC1 f4, 0x2E70 (at)
-LUI t7, 0x0015
-ORI t7, t7, 0x5CC0
-LUI at, 0x800F
-SW t7, 0xAD40 (at)
-copiedHookLabel0:
-LW t8, 0xAD40 (t8)
-LUI at, 0x800F
-LUI s6, 0x8010
-LUI s5, 0x800F
-LUI s4, 0x800F
-LUI s3, 0x800F
-LUI s1, 0x8010
-LUI s0, 0x8010
-ADDIU s0, s0, 0x1418
-ADDIU s1, s1, 0xF238
-ADDIU s3, s3, 0xAD44
-ADDIU s4, s4, 0xAD74
-ADDIU s5, s5, 0xAD30
-ADDIU s6, s6, 0xF1E0
-SW t8, 0xAD3C (at)
-moreReplacedCode:
-OR a0, s2, r0
-OR a1, r0, r0
-JAL osRecvMesg
-ADDIU a2, r0, 1
-JAL 0x800E2CF0
-NOP
-SW v0, 0x0000 (s0)
-J 0x80026770
-SW v1, 0x0004 (s0)
+    LI a0, D_8019CFC0
+    JAL osContStartReadData
+    NOP
+    LI a0, D_8019CFC0
+    ADDU a1, r0, r0
+    JAL osRecvMesg
+    ADDIU a2, r0, 1
+
+    JAL func_800D498C
+    NOP
+    LI a0, 0x801C1BD0
+    JAL osContGetReadData
+    NOP
+    LI s5, 0x801C1BD0
+    LHU s6, 0x0000 (s5) //inputs pressed on boot
+
+    JAL func_800D49B8
+    NOP
+    ORI t0, r0, 0x0010 //R button
+    BEQ t0, s6, setRecordingState
+    NOP
+
+    ORI t0, r0, 0x0020 //L button
+    BEQ t0, s6, setPlaybackState
+    NOP
+
+    ORI t0, r0, 0x2000 //Z button
+    BEQ t0, s6, setAppendState
+    NOP
+
+
+
+
+    afterInputCheck:
+    JAL cBootFunction
+    NOP
+    LUI a1, 0x8010
+    ADDIU a1, a1, 0xF230
+    OR a0, s2, r0
+    JAL osCreateMesgQueue
+    ADDIU a2, r0, 1
+
+    LUI a0, 0x8002
+    JAL 0x800D4040
+    ADDIU a0, a0, 0x6604
+    OR a0, s2, r0
+    ADDIU a1, r0, 1
+    JAL osSendMesg
+    OR a2, r0, r0
+    JAL 0x80026080
+    NOP
+    LUI at, 0x42C8
+    LUI t6, 0x8000
+    MTC1 at, f4
+    LW t6, 0x0300 (t6)
+    LUI at, 0x8016
+    LUI t8, 0x800F
+    BNEZ t6, copiedHookLabel0
+    SWC1 f4, 0x2E70 (at)
+    LUI t7, 0x0015
+    ORI t7, t7, 0x5CC0
+    LUI at, 0x800F
+    SW t7, 0xAD40 (at)
+    copiedHookLabel0:
+    LW t8, 0xAD40 (t8)
+    LUI at, 0x800F
+    LUI s6, 0x8010
+    LUI s5, 0x800F
+    LUI s4, 0x800F
+    LUI s3, 0x800F
+    LUI s1, 0x8010
+    LUI s0, 0x8010
+    ADDIU s0, s0, 0x1418
+    ADDIU s1, s1, 0xF238
+    ADDIU s3, s3, 0xAD44
+    ADDIU s4, s4, 0xAD74
+    ADDIU s5, s5, 0xAD30
+    ADDIU s6, s6, 0xF1E0
+    SW t8, 0xAD3C (at)
+    moreReplacedCode:
+    OR a0, s2, r0
+    OR a1, r0, r0
+    JAL osRecvMesg
+    ADDIU a2, r0, 1
+    JAL 0x800E2CF0
+    NOP
+    SW v0, 0x0000 (s0)
+    J 0x80026770
+    SW v1, 0x0004 (s0)
+
+    setRecordingState:
+    LI t0, gInputMode
+    ORI t1, r0, 1
+    SW t1, 0x0000 (t0) //set gInputMode to recording
+    J afterInputCheck
+    NOP
+
+    setPlaybackState:
+    LI t0, gInputMode
+    ORI t1, r0, 2
+    SW t1, 0x0000 (t0) //set gInputMode to playback
+    J afterInputCheck
+    NOP
+
+    setAppendState:
+    LI t0, gInputMode
+    ORI t1, r0, 3
+    SW t1, 0x0000 (t0) //set gInputMode to append
+    J afterInputCheck
+    NOP    
 
 perFrameASM:
 JAL perFrameCFunction
