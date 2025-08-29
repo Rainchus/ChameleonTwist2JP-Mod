@@ -1081,7 +1081,7 @@ void func_800293F0_Hook2(void) {
         stateCooldown = 5;
     } else if (currentlyPressedButtons & R_JPAD) {
         isLoadPending = 6;
-        g_freeze_frames = 7;
+        g_freeze_frames = 6;
         D_800EAF60 = 0; //set game mode to boot game mode
         D_800EAF64 = 0;
     }
