@@ -1211,12 +1211,12 @@ s32 SaveRecording(void) {
     s32 fileSize;
 
     fileres = f_open(&sdsavefile, pathRecording, FA_OPEN_ALWAYS | FA_WRITE | FA_READ);
-    fileSize = gSavedButtonInputs.frameCountTotal * 4;
+    fileSize = gSavedButtonInputs.frameCountTotal * sizeof(OSContPadPacked);
     //if it's greater than this, the file size was likely uninitialized
     if (fileSize > 0x100000) {
         f_close(&sdsavefile);
     } else {
-        f_write(&sdsavefile, (void*)gSavedButtonInputs.frameCountTotal, ALIGN(sizeof(toggles), 4), &filebytesread);
+        f_write(&sdsavefile, (void*)&gSavedButtonInputs, fileSize, &filebytesread);
         f_close(&sdsavefile);
     }
     return 1;
@@ -1228,7 +1228,7 @@ s32 ImportRecording(void) {
     FRESULT fileres;
 
     fileres = f_open(&sdsavefile, pathRecording, FA_OPEN_ALWAYS | FA_WRITE | FA_READ);
-    f_read(&sdsavefile, (void*)gSavedButtonInputs.frameCountTotal, MAX_FILE_SIZE, &filebytesread);
+    f_read(&sdsavefile, (void*)&gSavedButtonInputs, MAX_FILE_SIZE, &filebytesread);
     f_close(&sdsavefile);
     return 1;    
 }
