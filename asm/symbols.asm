@@ -175,4 +175,34 @@
 .definelabel func_800D498C, 0x800D498C
 .definelabel osContGetReadData, 0x800DC044
 .definelabel func_800D49B8, 0x800D49B8
+
+.definelabel func_8005524C, 0x8005524C
+.definelabel func_8002A164, 0x8002A164
+.definelabel func_80027E98, 0x80027E98
+.definelabel func_80027EA8, 0x80027EA8
+.definelabel func_80027D94, 0x80027D94
+.definelabel func_800AA720, 0x800AA720
+.definelabel func_8002A088, 0x8002A088
+
+.definelabel D_80160800, 0x80160800
+.definelabel D_800EAECC, 0x800EAECC
+.definelabel gGtActionHead, 0x801607FC
+.definelabel D_801606D0, 0x801606D0
+.definelabel D_80160818, 0x80160818
+
 .definelabel gSavedButtonInputs, 0x80757830
+// zone drawing (zone_draw.c)
+.definelabel func_80036CF0, 0x80036CF0 //draws the orthographic HUD-model pass
+.definelabel gTextCharsMax, 0x80185790 //u16, max debug text chars per frame (100)
+.definelabel gTextCharsUsed, 0x80185792 //u16, debug text chars used this frame
+
+// zone warp (zone_warp.c)
+.definelabel gPlayerRaw, 0x80187290 //start of the player struct (pos at +0x870 = 0x80187B00)
+.definelabel gPlayerPosCopy, 0x80184E28 //copy of the player position
+.definelabel gCameraCtrl, 0x80162E20 //camera controller, eye at +0x48, look-at at +0x54
+.definelabel imageStuffRaw, 0x80187C10
+.definelabel func_8005564C, 0x8005564C //despawns zone objects, clears zone loaded flags
+.definelabel func_800B4B04, 0x800B4B04
+
+// version text (version_text.c)
+.definelabel gSelectionScreen, 0x800F0934 //s32, game selection step screen: 1 = JSS logo, 2 = title

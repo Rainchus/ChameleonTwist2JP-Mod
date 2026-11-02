@@ -39,7 +39,7 @@ PAYLOAD_END_RAM:
 with open('build.ninja', 'w') as buildfile:
     ninja = ninja_syntax.Writer(buildfile)
     ninja.variable('CC', 'mips64-elf-gcc')
-    ninja.variable('STANDARDFLAGS', '-O2 -Wall -Wno-missing-braces -mtune=vr4300 -march=vr4300 -mabi=32 -fomit-frame-pointer -mno-abicalls -fno-pic -G0')
+    ninja.variable('STANDARDFLAGS', '-O2 -Wall -Wunused-but-set-variable -Wno-missing-braces -mtune=vr4300 -march=vr4300 -mabi=32 -fomit-frame-pointer -mno-abicalls -fno-pic -G0')
     ninja.variable('INCLUDE_FLAGS', '-Iinclude -Isrc')
 
     ninja.rule(

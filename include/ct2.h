@@ -9,6 +9,8 @@ extern s16 p1ButtonsPressed;
 
 #define ARRAY_COUNT(arr) (sizeof(arr) / sizeof(arr[0]))
 
+#define PRACTWIST_VERSION "0.7.2" //shown on the Japan System Supply logo (version_text.c)
+
 typedef volatile unsigned long		vu32;	/* unsigned 32-bit */
 #define	PHYS_TO_K1(x)	((u32)(x)|0xA0000000)	/* physical to kseg1 */
 #define	IO_READ(addr)		(*(vu32 *)PHYS_TO_K1(addr))
@@ -25,6 +27,7 @@ int __osDpDeviceBusy();
 int __osSpDeviceBusy();
 int __osSiDeviceBusy();
 void* memcpy(void* destination, const void* source, u32 size);
+void reboot(int rom, int tv, int reset, int cic);
 
 #define decompressBuffer 0x800E87E0
 
@@ -270,7 +273,7 @@ typedef struct testingstuff {
 } testingstuff;
 
 extern testingstuff imageStuff;
-extern ZoneData gZones[64]; //unsure of max
+extern ZoneData gZones[81]; //game checks indices 1-80 (see zone_draw.c)
 
 extern f32 powerUpFloatArray[8];
 void setTextGradient(s32, s32, s32, s32, s32);
@@ -296,7 +299,11 @@ enum Toggles {
     TOGGLE_TIMER_MAIN,
     TOGGLE_TIMER_DISPLAY_VOID,
     TOGGLE_TIMER_DISPLAY_ZONE_CHANGE,
-    TOGGLE_DISPLAY_INPUTS
+    TOGGLE_DISPLAY_INPUTS,
+
+    //page 2
+    TOGGLE_DRAW_ZONES,
+    TOGGLE_ZONE_LABELS,
 };
 
 enum TongueState {
@@ -347,6 +354,20 @@ extern u32 gTimerCopy;
 extern f32 gBossHp;
 extern u32 gDoingVoidOut;
 extern u32 gZoneChange;
+
+// zone_draw.c
+void ZoneCaptureCamera(Mtx* proj, Mtx* view, u16 perspNorm, f32* eyeAt, f32 near, f32 far);
+void DrawZoneLabels(void);
+s32 toggleDrawZones(void);
+s32 toggleZoneLabels(void);
+void ZoneSanitizeToggles(void);
+
+// zone_warp.c
+s32 ZoneWarpRequest(s32 target);
+void ZoneWarpUpdate(void);
+
+// version_text.c
+void DrawVersionText(void);
 
 extern char* SkyLandArea0[32];
 extern char* SkyLandArea1[11];

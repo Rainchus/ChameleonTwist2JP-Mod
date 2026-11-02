@@ -70,11 +70,8 @@ extern s32 zoneLockout;
 u32 gCurZone = 0;
 
 s32 ZoneWarp(void) {
-    gRespawnZone = menuCurRespawnZone;
-    gZoneChange = 1;
-    zoneLockout = 4;
-    gPlayerActors[0].pos.y = -10000.0f;
-    return 1;
+    //puts the player on the zone's respawn point (see zone_warp.c)
+    return ZoneWarpRequest(menuCurRespawnZone);
 }
 
 s32 ToggleTimer(void) {
@@ -194,7 +191,23 @@ char** page1Strings[] = {
     ONAndOFF
 };
 
+char string_Zones_All[] = {
+    "All"
+};
+
+char string_Zones_Near[] = {
+    "Near"
+};
+
+char* ZoneDrawStrings[] = {
+    string_OFF,
+    string_Zones_All,
+    string_Zones_Near,
+};
+
 char** page2Strings[] = {
+    ONAndOFF,
+    ZoneDrawStrings,
     ONAndOFF,
 };
 
@@ -267,16 +280,22 @@ menuPage page1 = {
 };
 
 menuPage page2 = {
-    1, //optionCount
+    3, //optionCount
     2, //pageIndex
     { //options
         "Warp To Zone",
+        "Draw Zones",
+        "Zone Labels",
     },
     { //menuProc
         &ZoneWarp,
+        &toggleDrawZones,
+        &toggleZoneLabels,
     },
     { //flags
         -1,
+        TOGGLE_DRAW_ZONES,
+        TOGGLE_ZONE_LABELS,
     },
 
     page2Strings,

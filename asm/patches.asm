@@ -16,7 +16,7 @@
 
     LI a0, 0xC00000
     LUI a1, 0x8040
-    LUI a2, 0x0002
+    LUI a2, 0x0040
     JAL dma_copy
     ORI a2, a2, 0x0000
     J copiedHookCode
@@ -154,6 +154,9 @@ dma_copy:
     J func_8002956C_Hook
     NOP
 
+.org 0x80029C44
+    J func_80029C44_Hook
+
 .org 0x800D6290
     J func_800D6290_Hook
     NOP
@@ -168,4 +171,10 @@ dma_copy:
 
 .org 0x800D49E4
     J func_800D49E4_Hook
+    NOP
+
+//draw zones between the world pass and the HUD-model pass
+.headersize 0x80024C00
+.org 0x800371D4
+    JAL ZoneRenderHook
     NOP

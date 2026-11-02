@@ -45,12 +45,7 @@ void MainTimer(void) {
     char timeString[64];
     char healthString[32];
 
-    u64 curCount = osGetCount();
-    u32 elapsedCountThisFrame = 0;
-
     u32 milliseconds, seconds, minutes;
-
-    u32 gTimeDisplayed;
     f64 totalMilliseconds;
 
     if (!toggles[TOGGLE_TIMER_MAIN]) {

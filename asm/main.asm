@@ -18,8 +18,11 @@ PAYLOAD_START_RAM:
 .importobj "obj\menu.o"
 .importobj "obj\threads.o"
 .importobj "obj\timer.o"
+.importobj "obj\version_text.o"
 .importobj "obj\yellow_block.o"
 .importobj "obj\zones.o"
+.importobj "obj\zone_draw.o"
+.importobj "obj\zone_warp.o"
 .importobj "lib\libcart.a"
 
 .align 8

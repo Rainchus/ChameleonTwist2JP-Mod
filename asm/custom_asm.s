@@ -356,7 +356,7 @@ zoneSetCheck:
     SW t6, 0x0000 (t5) //remove zone lockout
     skipWrite:
     J 0x80055124
-    NOP
+    LUI t5, 0x800F //restore t5: the game's next instruction is LH t5, 0xAE00 (t5) (reads gRespawnZone)
 
     newZone:
     SW s3, 0x0000 (t5)
@@ -468,6 +468,9 @@ copiedHookCode:
     NOP
 
     setPlaybackState:
+    //TODO: does this work?
+    //JAL ImportRecording //load recording file
+    //NOP
     LI t0, gInputMode
     ORI t1, r0, 2
     SW t1, 0x0000 (t0) //set gInputMode to playback
@@ -482,11 +485,11 @@ copiedHookCode:
     NOP    
 
 perFrameASM:
-JAL perFrameCFunction
-NOP
-LUI t6, 0x800F
-J 0x80029618
-LHU t6, 0xAF60 (t6)
+    JAL perFrameCFunction
+    NOP
+    LUI t6, 0x800F
+    J 0x80029618
+    LHU t6, 0xAF60 (t6)
 
 //80026770
 
