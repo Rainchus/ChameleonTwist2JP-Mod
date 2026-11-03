@@ -195,14 +195,14 @@ char string_Zones_All[] = {
     "All"
 };
 
-char string_Zones_Near[] = {
-    "Near"
+char string_Zones_OnScreen[] = {
+    "On Screen"
 };
 
 char* ZoneDrawStrings[] = {
     string_OFF,
     string_Zones_All,
-    string_Zones_Near,
+    string_Zones_OnScreen,
 };
 
 char** page2Strings[] = {

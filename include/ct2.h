@@ -9,7 +9,7 @@ extern s16 p1ButtonsPressed;
 
 #define ARRAY_COUNT(arr) (sizeof(arr) / sizeof(arr[0]))
 
-#define PRACTWIST_VERSION "0.7.2" //shown on the Japan System Supply logo (version_text.c)
+#define PRACTWIST_VERSION "0.7.3" //shown on the Japan System Supply logo (version_text.c)
 
 typedef volatile unsigned long		vu32;	/* unsigned 32-bit */
 #define	PHYS_TO_K1(x)	((u32)(x)|0xA0000000)	/* physical to kseg1 */

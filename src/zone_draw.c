@@ -23,7 +23,7 @@
 
 #define ZONE_MAX_INDEX        80    // game loop runs while index < 0x51
 #define ZONE_LIST_END_TAG     6     // *(s16*)unk0 value that ends the list
-#define ZONE_NEAR_RANGE       2     // "Near" mode: current zone +/- this many
+#define ZONE_SCREEN_MARGIN    1.1f  // "On Screen" mode: widen the view slightly so boxes don't pop at the edges
 #define ZONE_EDGE_ZONES_MAX   16    // outlines are drawn for the N closest zones
 #define ZONE_LABELS_MAX       10
 #define ZONE_TEXT_RESERVE     16    // chars left free for the game's own HUD text
@@ -45,7 +45,7 @@
 enum ZoneDrawModes {
     ZONE_DRAW_OFF = 0,
     ZONE_DRAW_ALL = 1,
-    ZONE_DRAW_NEAR = 2,
+    ZONE_DRAW_ON_SCREEN = 2,
     ZONE_DRAW_MODE_COUNT
 };
 
@@ -77,6 +77,7 @@ ZoneCamera gZoneCam = { 0 };
 
 static ZoneBox sZoneBoxes[ZONE_MAX_INDEX + 1];
 static s32 sZoneCount = 0; // highest valid index
+static u8 sZoneOnScreen[ZONE_MAX_INDEX + 1]; // filled once per frame by UpdateZoneVisibility
 
 static Vtx sFaceVtx[2][FACE_VTX_MAX];
 static Vtx sEdgeVtx[2][EDGE_VTX_MAX];
@@ -174,14 +175,90 @@ static void ReadZoneTable(void) {
 }
 
 static s32 ZoneIsDrawn(s32 index) {
-    s32 cur = gRespawnZone;
     switch (toggles[TOGGLE_DRAW_ZONES]) {
         case ZONE_DRAW_ALL:
             return 1;
-        case ZONE_DRAW_NEAR:
-            return index >= cur - ZONE_NEAR_RANGE && index <= cur + ZONE_NEAR_RANGE;
+        case ZONE_DRAW_ON_SCREEN:
+            return sZoneOnScreen[index];
     }
     return 0;
+}
+
+/* ------------------------------------------------------------------------ */
+/* View frustum                                                             */
+/* ------------------------------------------------------------------------ */
+
+// camera basis: f = forward, s = right, u = up (same as guLookAt with up = +Y)
+typedef struct ZoneCamBasis {
+    f32 f[3];
+    f32 s[3];
+    f32 u[3];
+} ZoneCamBasis;
+
+static s32 ZoneGetCamBasis(ZoneCamBasis* cb) {
+    f32 len;
+    s32 i;
+
+    for (i = 0; i < 3; i++) {
+        cb->f[i] = gZoneCam.at[i] - gZoneCam.eye[i];
+    }
+    len = zsqrtf(cb->f[0] * cb->f[0] + cb->f[1] * cb->f[1] + cb->f[2] * cb->f[2]);
+    if (len < 0.001f) return 0;
+    for (i = 0; i < 3; i++) cb->f[i] /= len;
+
+    // s = f x up(0,1,0)
+    cb->s[0] = -cb->f[2];
+    cb->s[1] = 0.0f;
+    cb->s[2] = cb->f[0];
+    len = zsqrtf(cb->s[0] * cb->s[0] + cb->s[2] * cb->s[2]);
+    if (len < 0.001f) return 0;
+    cb->s[0] /= len;
+    cb->s[2] /= len;
+
+    // u = s x f
+    cb->u[0] = cb->s[1] * cb->f[2] - cb->s[2] * cb->f[1];
+    cb->u[1] = cb->s[2] * cb->f[0] - cb->s[0] * cb->f[2];
+    cb->u[2] = cb->s[0] * cb->f[1] - cb->s[1] * cb->f[0];
+    return 1;
+}
+
+// a box is off screen when all 8 corners are outside the same side of the view
+// (left, right, top, bottom, near or far). Anything else counts as visible.
+static s32 BoxOnScreen(ZoneBox* b, ZoneCamBasis* cb) {
+    f32 tx = ZONE_TAN_HALF_FOV * ZONE_ASPECT * ZONE_SCREEN_MARGIN;
+    f32 ty = ZONE_TAN_HALF_FOV * ZONE_SCREEN_MARGIN;
+    s32 outLeft = 0, outRight = 0, outDown = 0, outUp = 0, outNear = 0, outFar = 0;
+    s32 c, i;
+
+    for (c = 0; c < 8; c++) {
+        f32 d[3], xv, yv, depth;
+        d[0] = ((c & 1) ? b->max[0] : b->min[0]) - gZoneCam.eye[0];
+        d[1] = ((c & 2) ? b->max[1] : b->min[1]) - gZoneCam.eye[1];
+        d[2] = ((c & 4) ? b->max[2] : b->min[2]) - gZoneCam.eye[2];
+        depth = xv = yv = 0.0f;
+        for (i = 0; i < 3; i++) {
+            depth += d[i] * cb->f[i];
+            xv += d[i] * cb->s[i];
+            yv += d[i] * cb->u[i];
+        }
+        if (xv < -depth * tx) outLeft++;
+        if (xv > depth * tx) outRight++;
+        if (yv < -depth * ty) outDown++;
+        if (yv > depth * ty) outUp++;
+        if (depth < gZoneCam.near) outNear++;
+        if (depth > gZoneCam.far) outFar++;
+    }
+    return !(outLeft == 8 || outRight == 8 || outDown == 8 || outUp == 8 || outNear == 8 || outFar == 8);
+}
+
+static void UpdateZoneVisibility(void) {
+    ZoneCamBasis cb;
+    s32 i;
+    s32 haveBasis = ZoneGetCamBasis(&cb);
+
+    for (i = 1; i <= sZoneCount; i++) {
+        sZoneOnScreen[i] = haveBasis ? BoxOnScreen(&sZoneBoxes[i], &cb) : 1;
+    }
 }
 
 static s32 ZoneDrawingActive(void) {
@@ -437,6 +514,7 @@ static void DrawZonesBuild(void) {
 void ZoneRenderHook(void) {
     if (ZoneDrawingActive()) {
         ReadZoneTable();
+        UpdateZoneVisibility();
         if (toggles[TOGGLE_DRAW_ZONES] != ZONE_DRAW_OFF && sZoneCount > 0) {
             DrawZonesBuild();
         }
@@ -452,36 +530,19 @@ void ZoneRenderHook(void) {
 
 // world -> 320x240 screen; returns 0 if behind the camera
 static s32 ZoneProject(f32* p, f32* sx, f32* sy, f32* depthOut) {
-    f32 f[3], s[3], u[3], d[3];
-    f32 len, xv, yv, depth;
+    ZoneCamBasis cb;
+    f32 d[3], xv, yv, depth;
     s32 i;
 
+    if (!ZoneGetCamBasis(&cb)) return 0;
+    depth = xv = yv = 0.0f;
     for (i = 0; i < 3; i++) {
-        f[i] = gZoneCam.at[i] - gZoneCam.eye[i];
         d[i] = p[i] - gZoneCam.eye[i];
+        depth += d[i] * cb.f[i];
+        xv += d[i] * cb.s[i];
+        yv += d[i] * cb.u[i];
     }
-    len = zsqrtf(f[0] * f[0] + f[1] * f[1] + f[2] * f[2]);
-    if (len < 0.001f) return 0;
-    for (i = 0; i < 3; i++) f[i] /= len;
-
-    // s = f x up(0,1,0)
-    s[0] = -f[2];
-    s[1] = 0.0f;
-    s[2] = f[0];
-    len = zsqrtf(s[0] * s[0] + s[2] * s[2]);
-    if (len < 0.001f) return 0;
-    s[0] /= len;
-    s[2] /= len;
-
-    // u = s x f
-    u[0] = s[1] * f[2] - s[2] * f[1];
-    u[1] = s[2] * f[0] - s[0] * f[2];
-    u[2] = s[0] * f[1] - s[1] * f[0];
-
-    depth = d[0] * f[0] + d[1] * f[1] + d[2] * f[2];
     if (depth < gZoneCam.near || depth > gZoneCam.far) return 0;
-    xv = d[0] * s[0] + d[1] * s[1] + d[2] * s[2];
-    yv = d[0] * u[0] + d[1] * u[1] + d[2] * u[2];
 
     *sx = 160.0f + (xv / (depth * ZONE_TAN_HALF_FOV * ZONE_ASPECT)) * 160.0f;
     *sy = 120.0f - (yv / (depth * ZONE_TAN_HALF_FOV)) * 120.0f;
